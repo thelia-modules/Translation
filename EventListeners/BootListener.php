@@ -28,6 +28,6 @@ class BootListener implements EventSubscriberInterface
     public function addPoTranslations()
     {
         $translator = $this->translator;
-        $translator->addResource('po', '/application/local/po/fo.default.po', 'fr_FR', 'fo.default');
+        $translator->addResource('po', THELIA_LOCAL_DIR.'/po/messages.fr.po', 'fr_FR', 'bo.default');
     }
 }

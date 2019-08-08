@@ -1,0 +1,45 @@
+{extends file="admin-layout.tpl"}
+
+{block name="main-content"}
+    <div class="general-block-decorator">
+        <h1>{intl l="Export translations" d="translation.bo.default"}</h1>
+        {form name="translation-export-form"}
+        <div class="form-container">
+            <form method="POST" id="translation.export.form" action="{url path="/admin/module/translation/export" lang_id="$edit_language_id"}">
+
+                {include
+                    file="includes/inner-form-toolbar.html"
+                    hide_submit_buttons=true
+                    close_url=$close_url
+                }
+
+                {form_hidden_fields form=$form}
+
+                <div class="form-group">
+                    {form_field field="directory"}
+                    <div class="col-md-3">
+                        <select name={$name} id="translate.directory" class="form-control">
+                            {foreach $choices as $choice}
+                                <option value="{$choice->value}" {if $value == $choice->value}selected="selected"{/if}>{$choice->label}</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                    {/form_field}
+
+                    {form_field field="extension"}
+                    <div class="col-md-2">
+                        <select name="{$name}" id="translate.extention" class="form-control">
+                            {foreach $choices as $choice}
+                                <option value="{$choice->value}" {if $value == $choice->value}selected="selected"{/if}>{$choice->label}</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                    {/form_field}
+                </div>
+
+                <input type="submit" class="btn btn-success" />
+            </form>
+            {/form}
+        </div>
+    </div>
+{/block}
