@@ -23,6 +23,7 @@ class ExportController extends BaseAdminController
 {
     /**
      * @return \Thelia\Core\HttpFoundation\Response
+     * @throws \Exception
      */
     public function exportAction()
     {
@@ -50,51 +51,62 @@ class ExportController extends BaseAdminController
         return $this->render('translation');
     }
 
+
     /**
      * @param $dir
      * @param $ext
      * @param Lang $lang
+     * @throws \Exception
      */
     protected function exportTranslations($dir, $ext, Lang $lang)
     {
-
-        $directories = [];
+        $template = false;
+        $items = [];
         switch ($dir){
             case "coreThelia":
-                    $directories["core"] = THELIA_LIB;
+                $domain =  "core";
+                $items[$domain]["directory"] = THELIA_LIB;
+                $items[$domain]["i18nDirectory"] = THELIA_LIB . 'Config' . DS . 'I18n';
                 break;
             case "frontOffice" :
-                $directories["fo.default"] = THELIA_ROOT . "templates" . DS . TemplateDefinition::FRONT_OFFICE_SUBDIR . DS ."default";
+                $template = new TemplateDefinition("default", TemplateDefinition::FRONT_OFFICE);
                 break;
 
             case "backOffice" :
-                $directories["bo.default"] = THELIA_ROOT . "templates" . DS . TemplateDefinition::BACK_OFFICE_SUBDIR . DS ."default";
+                $template = new TemplateDefinition("default", TemplateDefinition::BACK_OFFICE);
                 break;
 
             case "pdf" :
-                $directories["pdf.default"] = THELIA_ROOT . "templates" . DS . TemplateDefinition::PDF_SUBDIR . DS ."default";
+                $template = new TemplateDefinition("default", TemplateDefinition::PDF);
                 break;
 
             case "email" :
-                $directories["email.default"] = THELIA_ROOT . "templates" . DS . TemplateDefinition::EMAIL_SUBDIR . DS ."default";
+                $template = new TemplateDefinition("default", TemplateDefinition::EMAIL);
                 break;
 
             case "modules" :
-                $directories = $this->getModulesDirectories();
+                $items = $this->getModulesDirectories();
                 break;
         }
 
-        if ($ext === "po"){
-            $dumper = new PoFileDumper();
-        }
-        elseif ($ext === "xlf"){
-            $dumper = new XliffFileDumper();
-        }
-        else{
-            die("error");
+        if ($template){
+            $domain = $template->getTranslationDomain();
+            $items[$domain]["directory"] = $template->getAbsolutePath();
+            $items[$domain]["i18nDirectory"] = $template->getAbsoluteI18nPath();
         }
 
-        foreach ($directories as $domain => $directory){
+
+        $dumper = new PoFileDumper();
+        if ($ext === "xlf"){
+            $dumper = new XliffFileDumper();
+        }
+
+
+        foreach ($items as $domain => $item){
+
+            $directory = $item["directory"];
+            $i18nDirectory = $item["i18nDirectory"];
+
             $explodeDomain = explode('.',$domain);
 
             $walkMode = TranslationEvent::WALK_MODE_PHP;
@@ -102,6 +114,7 @@ class ExportController extends BaseAdminController
                 $walkMode = TranslationEvent::WALK_MODE_TEMPLATE;
             }
 
+            $this->loadTranslation($i18nDirectory, $domain, $lang->getLocale());
 
             $event = TranslationEvent::createGetStringsEvent(
                 $directory,
@@ -109,7 +122,6 @@ class ExportController extends BaseAdminController
                 $lang->getLocale(),
                 $domain
             );
-
             $this->getDispatcher()->dispatch(TheliaEvents::TRANSLATION_GET_STRINGS, $event);
             $arrayTranslations = [];
             if (null !== $translatableStrings = $event->getTranslatableStrings()){
@@ -117,13 +129,15 @@ class ExportController extends BaseAdminController
                     $arrayTranslations[$translation['text']] = $translation['translation'];
                 }
             }
-            $message = $arrayTranslations;
 
-            if ($message != null){
-                echo $directory;
-                dump($message);
+
+            if ($arrayTranslations != null){
+
+                echo $domain;
+                dump($arrayTranslations);
+
                 $catalogue = new MessageCatalogue($lang->getCode());
-                $catalogue->add($message);
+                $catalogue->add($arrayTranslations);
 
                 $dumper->formatCatalogue($catalogue, 'messages');
                 $mod = "";
@@ -142,9 +156,9 @@ class ExportController extends BaseAdminController
      */
     protected function getModulesDirectories()
     {
-        $modulesNames = scandir(THELIA_LOCAL_DIR.'modules');
+        $modulesNames = scandir(THELIA_LOCAL_DIR.'modules'.DS);
         $directories = [];
-        $types = ['fo', 'bo', 'ma', 'pf', 'co'];
+        $types = [ 'co', 'fo', 'bo', 'ma', 'pf'];
         $domain = null;
         foreach ($modulesNames as $moduleName){
             if ($moduleName[0] !== '.'){
@@ -181,8 +195,8 @@ class ExportController extends BaseAdminController
                             break;
                     }
                     if (null !== $domain){
-                        $this->loadTranslation($i18nDirectory, $domain);
-                        $directories[$domain] = $path;
+                        $directories[$domain]['directory'] = $path;
+                        $directories[$domain]['i18nDirectory'] = $i18nDirectory;
                     }
                 }
             }
@@ -205,7 +219,7 @@ class ExportController extends BaseAdminController
         );
     }
 
-    private function loadTranslation($directory, $domain)
+    private function loadTranslation($directory, $domain, $locale)
     {
         try {
             $finder = Finder::create()
@@ -215,9 +229,10 @@ class ExportController extends BaseAdminController
 
             /** @var \DirectoryIterator $file */
             foreach ($finder as $file) {
-                list($locale, $format) = explode('.', $file->getBaseName(), 2);
-
-                Translator::getInstance()->addResource($format, $file->getPathname(), $locale, $domain);
+                list($name, $format) = explode('.', $file->getBaseName(), 2);
+                if ($name === $locale){
+                    Translator::getInstance()->addResource($format, $file->getPathname(), $locale, $domain);
+                }
             }
         } catch (\InvalidArgumentException $ex) {
             // Ignore missing I18n directories
