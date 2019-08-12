@@ -33,7 +33,7 @@ class ExportForm extends BaseForm
                         "pdf" => Translator::getInstance()->trans('PDF templates', [], Translation::DOMAIN_NAME),
                         "email" => Translator::getInstance()->trans('E-mail templates', [], Translation::DOMAIN_NAME),
                         "modules" => Translator::getInstance()->trans('Modules', [], Translation::DOMAIN_NAME),
-                        "coreThelia" => Translator::getInstance()->trans('Core Thelia', [], Translation::DOMAIN_NAME)
+                        "core" => Translator::getInstance()->trans('Core Thelia', [], Translation::DOMAIN_NAME)
                     ]
                 ]
             )

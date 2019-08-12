@@ -1,10 +1,9 @@
 <?php
 
-
 namespace Translation\Controller;
 
-
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\Translation\Dumper\PhpFileDumper;
 use Symfony\Component\Translation\Dumper\PoFileDumper;
 use Symfony\Component\Translation\Dumper\XliffFileDumper;
 use Symfony\Component\Translation\MessageCatalogue;
@@ -33,21 +32,24 @@ class ExportController extends BaseAdminController
 
         $lang = LangQuery::create()->filterById($this->getRequest()->get('lang_id'))->findOne();
 
-        $dir = $exportForm->get('directory')->getData();
+        $dirs = $exportForm->get('directory')->getData();
         $ext = $exportForm->get('extension')->getData();
 
-        if ($dir === 'all'){
-            $this->exportTranslations('frontOffice', $ext, $lang);
-            $this->exportTranslations('backOffice', $ext, $lang);
-            $this->exportTranslations('pdf', $ext, $lang);
-            $this->exportTranslations('email', $ext, $lang);
-            $this->exportTranslations('modules', $ext, $lang);
-            $this->exportTranslations('coreThelia', $ext, $lang);
+        if ($dirs === 'all'){
+            $dirs = [
+                'frontOffice',
+                'backOffice',
+                'pdf',
+                'email',
+                'modules',
+                'core'
+            ];
         }
-        else{
+
+        foreach ($dirs as $dir) {
             $this->exportTranslations($dir, $ext, $lang);
         }
-        die();
+
         return $this->render('translation');
     }
 
@@ -60,54 +62,43 @@ class ExportController extends BaseAdminController
      */
     protected function exportTranslations($dir, $ext, Lang $lang)
     {
-        $template = false;
         $items = [];
+        
         switch ($dir){
-            case "coreThelia":
+            case "core":
                 $domain =  "core";
                 $items[$domain]["directory"] = THELIA_LIB;
                 $items[$domain]["i18nDirectory"] = THELIA_LIB . 'Config' . DS . 'I18n';
                 break;
-            case "frontOffice" :
-                $template = new TemplateDefinition("default", TemplateDefinition::FRONT_OFFICE);
-                break;
-
-            case "backOffice" :
-                $template = new TemplateDefinition("default", TemplateDefinition::BACK_OFFICE);
-                break;
-
-            case "pdf" :
-                $template = new TemplateDefinition("default", TemplateDefinition::PDF);
-                break;
-
-            case "email" :
-                $template = new TemplateDefinition("default", TemplateDefinition::EMAIL);
-                break;
-
             case "modules" :
                 $items = $this->getModulesDirectories();
                 break;
+            default :
+                $templateName = $this->camelCaseToUpperSnakeCase($dir);
+                $template = new TemplateDefinition('default', constant('TemplateDefinition::'.$templateName));
+                $domain = $template->getTranslationDomain();
+                $items[$domain]["directory"] = $template->getAbsolutePath();
+                $items[$domain]["i18nDirectory"] = $template->getAbsoluteI18nPath();
         }
 
-        if ($template){
-            $domain = $template->getTranslationDomain();
-            $items[$domain]["directory"] = $template->getAbsolutePath();
-            $items[$domain]["i18nDirectory"] = $template->getAbsoluteI18nPath();
+
+        switch ($ext){
+            case "po":
+                $dumper = new PoFileDumper();
+                break;
+            case "xlf":
+                $dumper = new XliffFileDumper();
+                break;
+            default:
+                $dumper = new PhpFileDumper();
         }
-
-
-        $dumper = new PoFileDumper();
-        if ($ext === "xlf"){
-            $dumper = new XliffFileDumper();
-        }
-
 
         foreach ($items as $domain => $item){
 
             $directory = $item["directory"];
             $i18nDirectory = $item["i18nDirectory"];
 
-            $explodeDomain = explode('.',$domain);
+            $explodeDomain = explode('.', $domain);
 
             $walkMode = TranslationEvent::WALK_MODE_PHP;
             if (count($explodeDomain) > 1){
@@ -122,6 +113,7 @@ class ExportController extends BaseAdminController
                 $lang->getLocale(),
                 $domain
             );
+
             $this->getDispatcher()->dispatch(TheliaEvents::TRANSLATION_GET_STRINGS, $event);
             $arrayTranslations = [];
             if (null !== $translatableStrings = $event->getTranslatableStrings()){
@@ -130,12 +122,7 @@ class ExportController extends BaseAdminController
                 }
             }
 
-
             if ($arrayTranslations != null){
-
-                echo $domain;
-                dump($arrayTranslations);
-
                 $catalogue = new MessageCatalogue($lang->getCode());
                 $catalogue->add($arrayTranslations);
 
@@ -158,42 +145,29 @@ class ExportController extends BaseAdminController
     {
         $modulesNames = scandir(THELIA_LOCAL_DIR.'modules'.DS);
         $directories = [];
-        $types = [ 'co', 'fo', 'bo', 'ma', 'pf'];
+        $types = [ 'Core', 'FrontOffice', 'BackOffice', 'Email', 'Pdf'];
         $domain = null;
         foreach ($modulesNames as $moduleName){
+            var_dump($moduleName);
             if ($moduleName[0] !== '.'){
                 /** @var Module $module */
                 $module = $this->getModule($moduleName);
+
                 foreach ($types as $type){
-                    switch ($type){
-                        case 'fo':
-                            $domain = $module->getFrontOfficeTemplateTranslationDomain('default');
-                            $path = $module->getAbsoluteFrontOfficeTemplatePath('default');
-                            $i18nDirectory = $module->getAbsoluteFrontOfficeI18nTemplatePath('default');
-                            break;
-                        case 'bo':
-                            $domain = $module->getBackOfficeTemplateTranslationDomain('default');
-                            $path = $module->getAbsoluteBackOfficeTemplatePath('default');
-                            $i18nDirectory = $module->getAbsoluteBackOfficeI18nTemplatePath('default');
-                            break;
+                    $getDomainFunction = 'get'.$type.'TemplateTranslationDomain';
+                    $getPathFunction = 'getAbsolute'.$type.'TemplatePath';
+                    $getI18nDirectoryFunction = 'getAbsolute'.$type.'I18nTemplatePath';
 
-                        case 'ma':
-                            $domain = $module->getEmailTemplateTranslationDomain('default');
-                            $path = $module->getAbsoluteEmailTemplatePath('default');
-                            $i18nDirectory = $module->getAbsoluteEmailI18nTemplatePath('default');
-                            break;
-
-                        case 'pf':
-                            $domain = $module->getPdfTemplateTranslationDomain('default');
-                            $path = $module->getAbsolutePdfTemplatePath('default');
-                            $i18nDirectory = $module->getAbsolutePdfI18nTemplatePath('default');
-                            break;
-                        case 'co':
-                            $domain = $module->getTranslationDomain();
-                            $path = $module->getAbsoluteBaseDir();
-                            $i18nDirectory = $module->getAbsoluteI18nPath();
-                            break;
+                    if ($type === 'Core') {
+                        $getDomainFunction = 'getTranslationDomain';
+                        $getPathFunction = 'getAbsoluteBaseDir';
+                        $getI18nDirectoryFunction = 'getAbsoluteI18nPath';
                     }
+
+                    $domain = $module->$getDomainFunction('default');
+                    $path = $module->$getPathFunction('default');
+                    $i18nDirectory = $module->$getI18nDirectoryFunction('default');
+
                     if (null !== $domain){
                         $directories[$domain]['directory'] = $path;
                         $directories[$domain]['i18nDirectory'] = $i18nDirectory;
@@ -219,7 +193,7 @@ class ExportController extends BaseAdminController
         );
     }
 
-    private function loadTranslation($directory, $domain, $locale)
+    protected function loadTranslation($directory, $domain, $locale)
     {
         try {
             $finder = Finder::create()
@@ -237,5 +211,24 @@ class ExportController extends BaseAdminController
         } catch (\InvalidArgumentException $ex) {
             // Ignore missing I18n directories
         }
+    }
+
+    protected function camelCaseToUpperSnakeCase($input)
+    {
+        if ( preg_match ( '/[A-Z]/', $input ) === 0 ) {
+            return strtoupper($input);
+        }
+        $pattern = '/([a-z])([A-Z])/';
+        $r = strtoupper(
+            preg_replace_callback(
+                $pattern,
+                function ($a) {
+                    return $a[1] . "_" . strtolower ( $a[2] );
+                },
+                $input
+            )
+        );
+
+        return $r;
     }
 }
