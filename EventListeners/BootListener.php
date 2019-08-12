@@ -8,6 +8,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Translation\Loader\PoFileLoader;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Translation\Translator;
+use Thelia\Model\LangQuery;
 
 class BootListener implements EventSubscriberInterface
 {
@@ -29,15 +30,16 @@ class BootListener implements EventSubscriberInterface
     {
         $poFiles = null;
         $xlfFiles = null;
-        $directory = THELIA_LOCAL_DIR . 'po';
-        if (file_exists($directory)){
-            $poFiles = $this->getPoFiles($directory, []);
+        $poDirectory = THELIA_LOCAL_DIR . "po";
+        $xlfDirectory = THELIA_LOCAL_DIR . "xlf";
+        if (file_exists($poDirectory)){
+            $this->importPoFiles($poDirectory);
+        }elseif (file_exists($xlfDirectory)){
+            $this->importPoFiles($xlfDirectory);
         }
-        $translator = $this->translator;
-        //$translator->addResource('po', THELIA_LOCAL_DIR.'/po/messages.fr.po', 'fr_FR', 'bo.default');
     }
 
-    protected function getPoFiles($directory, $files)
+    protected function importPoFiles($directory)
     {
         foreach (new \DirectoryIterator($directory) as $fileInfo) {
             if ($fileInfo->isDot()) {
@@ -45,11 +47,23 @@ class BootListener implements EventSubscriberInterface
             }
 
             if ($fileInfo->isDir()){
-                $files[] = $this->getPoFiles($fileInfo->getPath(), $files);
+                $this->importPoFiles($fileInfo->getPathname());
             }
 
             if ($fileInfo->isFile()){
-                die($fileInfo->getExtension());
+                if ('po' === $fileInfo->getExtension()){
+                    $langCode = explode('.', $fileInfo->getBasename())[1];
+                    $lang = LangQuery::create()->filterByCode($langCode)->findOne();
+                    $pathArray = explode('/', $fileInfo->getPath());
+                    $domain = end($pathArray);
+                    $this->translator->addResource(
+                        $fileInfo->getExtension(),
+                        $fileInfo->getPathname(),
+                        $lang->getLocale(),
+                        $domain
+                    );
+
+                }
             }
         }
     }
