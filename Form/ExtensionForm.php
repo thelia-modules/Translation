@@ -22,6 +22,7 @@ class ExtensionForm extends BaseForm
                 'extension',
                 ChoiceType::class,
                 [
+                    'data' => Translation::getConfigValue("extension"),
                     'choices' => [
                         'po' => '.po',
                         "xlf" => '.xlf'
