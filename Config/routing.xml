@@ -28,12 +28,19 @@
     </route>
     -->
 
-    <route id="translation.admin.menu" path="/admin/module/translation">
+    <route id="admin.translation.menu" path="/admin/module/translation">
         <default key="_controller">Translation\Controller\AdminController::showPage</default>
     </route>
 
     <route id="translation.export" path="/admin/module/translation/export">
         <default key="_controller">Translation\Controller\ExportController::exportAction</default>
+    </route>
+
+    <route id="translation.import" path="/admin/module/translation/import">
+        <default key="_controller">Translation\Controller\ImportController::importAction</default>
+    </route>
+    <route id="translation.extension" path="/admin/module/translation/extension">
+        <default key="_controller">Translation\Controller\AdminController::setExtensionAction</default>
     </route>
 
 </routes>

@@ -9,6 +9,7 @@ use Symfony\Component\Translation\Loader\PoFileLoader;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Translation\Translator;
 use Thelia\Model\LangQuery;
+use Translation\Translation;
 
 class BootListener implements EventSubscriberInterface
 {
@@ -28,18 +29,15 @@ class BootListener implements EventSubscriberInterface
 
     public function addPoTranslations()
     {
-        $poFiles = null;
-        $xlfFiles = null;
-        $poDirectory = THELIA_LOCAL_DIR . "po";
-        $xlfDirectory = THELIA_LOCAL_DIR . "xlf";
-        if (file_exists($poDirectory)){
-            $this->importPoFiles($poDirectory);
-        }elseif (file_exists($xlfDirectory)){
-            $this->importPoFiles($xlfDirectory);
+        $translationDir = Translation::TRANSLATIONS_DIR;
+        $ext = Translation::getConfigValue("extension");
+        $Directory = $translationDir . $ext;
+        if (file_exists($Directory)){
+            $this->importPoFiles($Directory, $ext);
         }
     }
 
-    protected function importPoFiles($directory)
+    protected function importPoFiles($directory ,$ext)
     {
         foreach (new \DirectoryIterator($directory) as $fileInfo) {
             if ($fileInfo->isDot()) {
@@ -47,11 +45,11 @@ class BootListener implements EventSubscriberInterface
             }
 
             if ($fileInfo->isDir()){
-                $this->importPoFiles($fileInfo->getPathname());
+                $this->importPoFiles($fileInfo->getPathname(), $ext);
             }
 
             if ($fileInfo->isFile()){
-                if ('po' === $fileInfo->getExtension()){
+                if ($ext === $fileInfo->getExtension()){
                     $langCode = explode('.', $fileInfo->getBasename())[1];
                     $lang = LangQuery::create()->filterByCode($langCode)->findOne();
                     $pathArray = explode('/', $fileInfo->getPath());
@@ -62,7 +60,6 @@ class BootListener implements EventSubscriberInterface
                         $lang->getLocale(),
                         $domain
                     );
-
                 }
             }
         }

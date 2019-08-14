@@ -10,11 +10,26 @@ namespace Translation\Controller;
 
 
 use Thelia\Controller\Admin\BaseAdminController;
+use Translation\Form\ExtensionForm;
+use Translation\Translation;
+
 
 class AdminController extends BaseAdminController
 {
     public function showPage()
     {
         return $this->render('translation');
+    }
+
+    public function setExtensionAction()
+    {
+        $form = new ExtensionForm($this->getRequest());
+        $extensionForm = $this->validateForm($form);
+
+        $extension = $extensionForm->get("extension")->getData();
+
+        Translation::setConfigValue("extension", $extension);
+
+        return $this->generateRedirect("/admin/module/translation");
     }
 }

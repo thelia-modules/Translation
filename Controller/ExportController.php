@@ -2,7 +2,7 @@
 
 namespace Translation\Controller;
 
-use Symfony\Component\Finder\Finder;
+
 use Symfony\Component\Translation\Dumper\PhpFileDumper;
 use Symfony\Component\Translation\Dumper\PoFileDumper;
 use Symfony\Component\Translation\Dumper\XliffFileDumper;
@@ -11,31 +11,41 @@ use Thelia\Controller\Admin\BaseAdminController;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Event\Translation\TranslationEvent;
 use Thelia\Core\Template\TemplateDefinition;
-use Thelia\Core\Translation\Translator;
 use Thelia\Model\Lang;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Module;
 use Thelia\Model\ModuleQuery;
 use Translation\Form\ExportForm;
+use Translation\Translation;
+
 
 class ExportController extends BaseAdminController
 {
     /**
-     * @return \Thelia\Core\HttpFoundation\Response
+     * @return \Symfony\Component\HttpFoundation\Response
      * @throws \Exception
      */
     public function exportAction()
     {
+        $translationsDir = Translation::TRANSLATIONS_DIR;
+        if (!file_exists($translationsDir)){
+            mkdir($translationsDir);
+        }
+        if (!file_exists($translationsDir."archives")){
+            mkdir($translationsDir."archives");
+        }
+        mkdir($translationsDir."tmp");
+
         $form = new ExportForm($this->getRequest());
 
         $exportForm  = $this->validateForm($form);
 
         $lang = LangQuery::create()->filterById($this->getRequest()->get('lang_id'))->findOne();
 
-        $dirs = $exportForm->get('directory')->getData();
-        $ext = $exportForm->get('extension')->getData();
+        $dirs = $exportForm->get('directories')->getData();
+        $ext = Translation::getConfigValue("extension");
 
-        if ($dirs === 'all'){
+        if (in_array('all', $dirs)){
             $dirs = [
                 'frontOffice',
                 'backOffice',
@@ -50,7 +60,37 @@ class ExportController extends BaseAdminController
             $this->exportTranslations($dir, $ext, $lang);
         }
 
-        return $this->render('translation');
+        $dirToZip = $translationsDir.'tmp'.DS.$ext;
+
+        $today = new \DateTime();
+        $name = "translation-export".$today->format("Y-m-d_H:i:s").".zip";
+
+        $zipPath = $translationsDir."archives".DS.$name;
+
+        $zip = new \ZipArchive();
+        $zip->open($zipPath, \ZipArchive::CREATE);
+        $this->folderToZip($dirToZip,$zip, strlen($translationsDir."tmp"));
+        $zip->close();
+
+        ImportController::deleteContent($translationsDir."tmp");
+        rmdir($translationsDir."tmp");
+
+        $archives = scandir($translationsDir."archives");
+        $archives = array_slice($archives, 2);
+        if (count($archives) > 5)
+        {
+            for ($i = 0; $i < count($archives)-5; $i++){
+                unlink($translationsDir."archives".DS.$archives[$i]);
+            }
+        }
+
+        header("Content-Type: application/zip");
+        header("Content-Disposition: attachment; filename=" . basename($zipPath));
+        header("Content-Length: " . filesize($zipPath));
+
+        readfile($zipPath);
+
+        return $this->generateRedirect("/admin/module/translation");
     }
 
 
@@ -66,21 +106,23 @@ class ExportController extends BaseAdminController
         
         switch ($dir){
             case "core":
-                $domain =  "core";
+                $domain =  $dir;
                 $items[$domain]["directory"] = THELIA_LIB;
-                $items[$domain]["i18nDirectory"] = THELIA_LIB . 'Config' . DS . 'I18n';
                 break;
             case "modules" :
                 $items = $this->getModulesDirectories();
                 break;
             default :
                 $templateName = $this->camelCaseToUpperSnakeCase($dir);
-                $template = new TemplateDefinition('default', constant('TemplateDefinition::'.$templateName));
-                $domain = $template->getTranslationDomain();
-                $items[$domain]["directory"] = $template->getAbsolutePath();
-                $items[$domain]["i18nDirectory"] = $template->getAbsoluteI18nPath();
+                $templates = $this->getTemplates(
+                    THELIA_TEMPLATE_DIR . $dir . DS,
+                    constant('Thelia\Core\Template\TemplateDefinition::'.$templateName)
+                );
+                foreach ($templates as $template){
+                    $domain = $template->getTranslationDomain();
+                    $items[$domain]["directory"] = $template->getAbsolutePath();
+                }
         }
-
 
         switch ($ext){
             case "po":
@@ -96,7 +138,6 @@ class ExportController extends BaseAdminController
         foreach ($items as $domain => $item){
 
             $directory = $item["directory"];
-            $i18nDirectory = $item["i18nDirectory"];
 
             $explodeDomain = explode('.', $domain);
 
@@ -104,8 +145,6 @@ class ExportController extends BaseAdminController
             if (count($explodeDomain) > 1){
                 $walkMode = TranslationEvent::WALK_MODE_TEMPLATE;
             }
-
-            $this->loadTranslation($i18nDirectory, $domain, $lang->getLocale());
 
             $event = TranslationEvent::createGetStringsEvent(
                 $directory,
@@ -130,12 +169,34 @@ class ExportController extends BaseAdminController
                 $mod = "";
                 if ($dir === 'modules'){
                     $key = explode('.', $domain);
-                    $mod = DS.$key[0].DS;
+                    $mod = DS.$key[0];
                 }
-                $path = THELIA_LOCAL_DIR.$ext.DS.$dir.$mod.DS.$domain;
+                $path = Translation::TRANSLATIONS_DIR."tmp".DS.$ext.DS.$dir.$mod.DS.$domain;
                 $dumper->dump($catalogue, ['path' => $path]);
             }
         }
+    }
+
+    /**
+     * @param $directory
+     * @param $templateDefinition
+     * @return array
+     * @throws \Exception
+     */
+    protected function getTemplates($directory, $templateDefinition){
+
+        $templates = [];
+
+        /** @var \DirectoryIterator $templateDirectory */
+        foreach (new \DirectoryIterator($directory) as $templateDirectory){
+            if ($templateDirectory->isDot()){
+                continue;
+            }
+            if ($templateDirectory->isDir()){
+                $templates[] = new TemplateDefinition($templateDirectory->getBasename(), $templateDefinition);
+            }
+        }
+        return $templates;
     }
 
     /**
@@ -148,29 +209,35 @@ class ExportController extends BaseAdminController
         $types = [ 'Core', 'FrontOffice', 'BackOffice', 'Email', 'Pdf'];
         $domain = null;
         foreach ($modulesNames as $moduleName){
-            var_dump($moduleName);
             if ($moduleName[0] !== '.'){
                 /** @var Module $module */
                 $module = $this->getModule($moduleName);
 
+                if (!$module){
+                    continue;
+                }
+
                 foreach ($types as $type){
                     $getDomainFunction = 'get'.$type.'TemplateTranslationDomain';
                     $getPathFunction = 'getAbsolute'.$type.'TemplatePath';
-                    $getI18nDirectoryFunction = 'getAbsolute'.$type.'I18nTemplatePath';
+                    $templateNames = [];
+                    if (file_exists($module->getAbsoluteBaseDir().DS."templates".DS.$type)){
+                        $templateNames = $this->getTemplateNames($module->getAbsoluteBaseDir().DS."templates".DS.$type);
+                    }
 
                     if ($type === 'Core') {
                         $getDomainFunction = 'getTranslationDomain';
                         $getPathFunction = 'getAbsoluteBaseDir';
-                        $getI18nDirectoryFunction = 'getAbsoluteI18nPath';
+                        $templateNames[] = $type;
                     }
 
-                    $domain = $module->$getDomainFunction('default');
-                    $path = $module->$getPathFunction('default');
-                    $i18nDirectory = $module->$getI18nDirectoryFunction('default');
+                    foreach ($templateNames as $templateName){
+                        $domain = $module->$getDomainFunction($templateName);
+                        $path = $module->$getPathFunction($templateName);
 
-                    if (null !== $domain){
-                        $directories[$domain]['directory'] = $path;
-                        $directories[$domain]['i18nDirectory'] = $i18nDirectory;
+                        if (null !== $domain){
+                            $directories[$domain]['directory'] = $path;
+                        }
                     }
                 }
             }
@@ -180,37 +247,28 @@ class ExportController extends BaseAdminController
 
     /**
      * @param $name
-     * @return Module
+     * @return bool|Module
      */
     protected function getModule($name)
     {
-        if (null !== $module = ModuleQuery::create()->filterByCode($name)->findOne()) {
+        if (null !== $module = ModuleQuery::create()->filterByCode($name)->filterByActivate(1)->findOne()) {
             return $module;
         }
-
-        throw new \InvalidArgumentException(
-            $this->getTranslator()->trans("No module found for code '%item'", ['%item' => $name])
-        );
+        return false;
     }
 
-    protected function loadTranslation($directory, $domain, $locale)
+    protected function getTemplateNames($directory)
     {
-        try {
-            $finder = Finder::create()
-                ->files()
-                ->depth(0)
-                ->in($directory);
-
-            /** @var \DirectoryIterator $file */
-            foreach ($finder as $file) {
-                list($name, $format) = explode('.', $file->getBaseName(), 2);
-                if ($name === $locale){
-                    Translator::getInstance()->addResource($format, $file->getPathname(), $locale, $domain);
-                }
+        $names = [];
+        foreach (new \DirectoryIterator($directory) as $templateDirectory){
+            if ($templateDirectory->isDot()){
+                continue;
             }
-        } catch (\InvalidArgumentException $ex) {
-            // Ignore missing I18n directories
+            if ($templateDirectory->isDir()){
+                $names[] = $templateDirectory->getBasename();
+            }
         }
+        return $names;
     }
 
     protected function camelCaseToUpperSnakeCase($input)
@@ -230,5 +288,28 @@ class ExportController extends BaseAdminController
         );
 
         return $r;
+    }
+
+    /**
+     * @param $folder
+     * @param \ZipArchive $zipFile
+     * @param $exclusiveLength
+     */
+    protected function folderToZip($folder, &$zipFile, $exclusiveLength) {
+        $handle = opendir($folder);
+        while (false !== $f = readdir($handle)) {
+            if ($f != '.' && $f != '..') {
+                $filePath = "$folder/$f";
+                $localPath = substr($filePath, $exclusiveLength);
+
+                if (is_file($filePath)) {
+                    $zipFile->addFile($filePath, $localPath);
+                } elseif (is_dir($filePath)) {
+                    $zipFile->addEmptyDir($localPath);
+                    $this->folderToZip($filePath, $zipFile, $exclusiveLength);
+                }
+            }
+        }
+        closedir($handle);
     }
 }

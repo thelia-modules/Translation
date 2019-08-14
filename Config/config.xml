@@ -12,6 +12,7 @@
 
     <forms>
         <form name="translation-export-form" class="Translation\Form\ExportForm" />
+        <form name="translation-extension-form" class="Translation\Form\ExtensionForm" />
     </forms>
 
     <commands>

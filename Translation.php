@@ -19,6 +19,8 @@ class Translation extends BaseModule
     /** @var string */
     const DOMAIN_NAME = 'translation';
 
+    const TRANSLATIONS_DIR = THELIA_LOCAL_DIR."translations".DS;
+
     /*
      * You may now override BaseModuleInterface methods, such as:
      * install, destroy, preActivation, postActivation, preDeactivation, postDeactivation
