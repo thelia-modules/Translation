@@ -2,7 +2,7 @@
 
 return array(
     'Export translations' => 'Export translations',
-    'Translation' => 'Translation',
+    'Translations' => 'Translations',
     'Select extension' => 'Select extension',
     'Import translations' => 'Import translations'
 );

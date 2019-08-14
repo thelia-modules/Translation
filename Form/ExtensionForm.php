@@ -9,6 +9,7 @@
 namespace Translation\Form;
 
 
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Thelia\Form\BaseForm;
 
 class ExtensionForm extends BaseForm
@@ -19,7 +20,7 @@ class ExtensionForm extends BaseForm
         $form
             ->add(
                 'extension',
-                "choice",
+                ChoiceType::class,
                 [
                     'choices' => [
                         'po' => '.po',

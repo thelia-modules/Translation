@@ -20,7 +20,7 @@ class AdminHook extends BaseHook
     public function onMainTopMenu(HookRenderEvent $event)
     {
         $event->add(
-            $this->render('/hook/main-in-top-menu-items.html', [])
+            $this->render('Translation/hook/main-in-top-menu-items.html', [])
         );
     }
 

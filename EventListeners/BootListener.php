@@ -23,21 +23,21 @@ class BootListener implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            TheliaEvents::BOOT => ['addPoTranslations', 64]
+            TheliaEvents::BOOT => ['addTranslations', 64]
        ];
     }
 
-    public function addPoTranslations()
+    public function addTranslations()
     {
         $translationDir = Translation::TRANSLATIONS_DIR;
         $ext = Translation::getConfigValue("extension");
         $Directory = $translationDir . $ext;
         if (file_exists($Directory)){
-            $this->importPoFiles($Directory, $ext);
+            $this->addTranslationsResources($Directory, $ext);
         }
     }
 
-    protected function importPoFiles($directory ,$ext)
+    protected function addTranslationsResources($directory, $ext)
     {
         foreach (new \DirectoryIterator($directory) as $fileInfo) {
             if ($fileInfo->isDot()) {
@@ -45,7 +45,7 @@ class BootListener implements EventSubscriberInterface
             }
 
             if ($fileInfo->isDir()){
-                $this->importPoFiles($fileInfo->getPathname(), $ext);
+                $this->addTranslationsResources($fileInfo->getPathname(), $ext);
             }
 
             if ($fileInfo->isFile()){

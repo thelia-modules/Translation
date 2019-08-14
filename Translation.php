@@ -12,6 +12,7 @@
 
 namespace Translation;
 
+use Propel\Runtime\Connection\ConnectionInterface;
 use Thelia\Module\BaseModule;
 
 class Translation extends BaseModule
@@ -27,4 +28,33 @@ class Translation extends BaseModule
      *
      * Have fun !
      */
+
+    public function postActivation(ConnectionInterface $con = null)
+    {
+        if (null == Translation::getConfigValue('extension')){
+            Translation::setConfigValue("extension", "po");
+        }
+    }
+
+    public static function deleteTmp()
+    {
+        $path = self::TRANSLATIONS_DIR."tmp";
+        if (file_exists($path)){
+            self::deleteContent($path);
+        }
+        rmdir($path);
+    }
+
+    public static function deleteContent($directory){
+        foreach (new \DirectoryIterator($directory) as $fileInfo){
+            if ($fileInfo->isDir()){
+                if (!$fileInfo->isDot()){
+                    self::deleteContent($fileInfo->getPathname());
+                    rmdir($fileInfo->getPathname());
+                }
+            }else{
+                unlink($fileInfo->getPathname());
+            }
+        }
+    }
 }

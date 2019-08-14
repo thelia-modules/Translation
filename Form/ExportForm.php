@@ -22,7 +22,7 @@ class ExportForm extends BaseForm
         $form
             ->add(
                 'directories',
-                "choice",
+                ChoiceType::class,
                 [
                     'required' => true,
                     'multiple' => true,

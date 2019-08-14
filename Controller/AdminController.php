@@ -18,12 +18,13 @@ class AdminController extends BaseAdminController
 {
     public function showPage()
     {
-        return $this->render('translation');
+        return $this->render('Translation/translation');
     }
 
     public function setExtensionAction()
     {
         $form = new ExtensionForm($this->getRequest());
+
         $extensionForm = $this->validateForm($form);
 
         $extension = $extensionForm->get("extension")->getData();

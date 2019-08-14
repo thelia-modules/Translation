@@ -28,13 +28,18 @@ class ExportController extends BaseAdminController
     public function exportAction()
     {
         $translationsDir = Translation::TRANSLATIONS_DIR;
+
         if (!file_exists($translationsDir)){
             mkdir($translationsDir);
         }
+
         if (!file_exists($translationsDir."archives")){
             mkdir($translationsDir."archives");
         }
-        mkdir($translationsDir."tmp");
+
+        if (!file_exists($translationsDir."tmp")){
+            mkdir($translationsDir."tmp");
+        }
 
         $form = new ExportForm($this->getRequest());
 
@@ -72,8 +77,7 @@ class ExportController extends BaseAdminController
         $this->folderToZip($dirToZip,$zip, strlen($translationsDir."tmp"));
         $zip->close();
 
-        ImportController::deleteContent($translationsDir."tmp");
-        rmdir($translationsDir."tmp");
+        Translation::deleteTmp();
 
         $archives = scandir($translationsDir."archives");
         $archives = array_slice($archives, 2);
@@ -251,10 +255,10 @@ class ExportController extends BaseAdminController
      */
     protected function getModule($name)
     {
-        if (null !== $module = ModuleQuery::create()->filterByCode($name)->filterByActivate(1)->findOne()) {
-            return $module;
-        }
-        return false;
+        return $module = ModuleQuery::create()
+            ->filterByCode($name)
+            ->filterByActivate(1)
+            ->findOne();
     }
 
     protected function getTemplateNames($directory)
