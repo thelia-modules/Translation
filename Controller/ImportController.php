@@ -39,7 +39,7 @@ class ImportController extends BaseAdminController
         $importFile = $this->getRequest()->files->get('file');
 
         $today = new \DateTime();
-        $fileName = "translation-import".$today->format("Y-m-d_H:i:s").".zip";
+        $fileName = "translation-import".$today->format("Y-m-d_H-i-s").".zip";
 
         copy($importFile, $path.$fileName);
 

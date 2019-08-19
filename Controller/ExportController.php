@@ -68,13 +68,13 @@ class ExportController extends BaseAdminController
         $dirToZip = $translationsDir.'tmp'.DS.$ext;
 
         $today = new \DateTime();
-        $name = "translation-export".$today->format("Y-m-d_H:i:s").".zip";
+        $name = "translation-export".$today->format("Y-m-d_H-i-s").".zip";
 
         $zipPath = $translationsDir."archives".DS.$name;
 
         $zip = new \ZipArchive();
         $zip->open($zipPath, \ZipArchive::CREATE);
-        $this->folderToZip($dirToZip,$zip, strlen($translationsDir."tmp"));
+        $this->folderToZip($dirToZip, $zip, strlen($translationsDir."tmp"));
         $zip->close();
 
         Translation::deleteTmp();
@@ -248,11 +248,7 @@ class ExportController extends BaseAdminController
         }
         return $directories;
     }
-
-    /**
-     * @param $name
-     * @return bool|Module
-     */
+    
     protected function getModule($name)
     {
         return $module = ModuleQuery::create()
