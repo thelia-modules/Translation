@@ -1,16 +1,10 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: nicolasbarbey
- * Date: 13/08/2019
- * Time: 15:25
- */
 
 namespace Translation\Form;
 
-
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Thelia\Form\BaseForm;
+use Translation\Translation;
 
 class ExtensionForm extends BaseForm
 {

@@ -1,65 +1,98 @@
 {extends file="admin-layout.tpl"}
 
+{block name="page-title"}{intl l='Translations' d='translation.bo.default'}{/block}
+
+{block name="check-resource"}admin.module{/block}
+{block name="check-access"}view{/block}
+{block name="check-module"}Translation{/block}
+
 {block name="main-content"}
-    <div class="general-block-decorator">
+    <div class="col-md-3 general-block-decorator">
 
         <div class="title title-without-tabs">{intl l="Select extension" d="translation.bo.default"}</div>
 
+        <div class="alert alert-info">
+            {intl l="Choose the format you want for your translations." d="translation.bo.default"}
+        </div>
         {form name="translation-extension-form"}
             <form method="POST" action={url path="/admin/module/translation/extension"}>
 
                 {form_hidden_fields form=$form}
+                <div class="form-group">
 
-                {form_field field="extension"}
-                    <div class="col-md-2 row">
+                    {form_field field="extension"}
                         <select name="{$name}" class="form-control" id="tranlation.extention">
                             {foreach $choices as $choice}
-                                <option value="{$choice->value}" {if $value == $choice->value}selected="selected"{/if}>{$choice->label}</option>
+                                <option value="{$choice->value}"
+                                        {if $value == $choice->value}selected="selected"{/if}>{$choice->label}</option>
                             {/foreach}
                         </select>
-                    </div>
-                {/form_field}
-                <input type="submit" class="btn btn-success">
+                    {/form_field}
+                </div>
+                <input type="submit" class="btn btn-block btn-success">
             </form>
         {/form}
-
-        <hr>
-
+    </div>
+    <div class="col-md-4 col-md-offset-1 general-block-decorator">
         <div class="title title-without-tabs">{intl l="Export translations" d="translation.bo.default"}</div>
         {form name="translation-export-form"}
-        <div class="form-container row">
-            <form method="POST" id="translation.export.form" action="{url path="/admin/module/translation/export" lang_id="$edit_language_id"}">
-
-                {include
-                    file="includes/inner-form-toolbar.html"
-                    hide_submit_buttons=true
-                    close_url=$close_url
-                }
-
-                {form_hidden_fields form=$form}
-
-                {form_field field="directories"}
-                <div class="col-md-3">
-                    <select name={$name} id="translate.directories" class="form-control" multiple>
-                        {foreach $choices as $choice}
-                            <option value="{$choice->value}" {if $value == $choice->value}selected="selected"{/if}>{$choice->label}</option>
-                        {/foreach}
-                    </select>
+            <div class="form-container row">
+                <div class="alert alert-info">
+                    {intl l="Choose what part of translations you want to export." d="translation.bo.default"}
                 </div>
-                {/form_field}
+                <form method="POST" id="translation.export.form"
+                      action="{url path="/admin/module/translation/export" lang_id="$edit_language_id"}">
+                    <div class="row inner-toolbar{if $page_bottom} inner-toolbar-bottom{/if}">
+                        <div class="col-md-12 inner-actions">
+                            <ul class="nav nav-pills">
+                                {loop name="lang_list" type="lang" backend_context="1"}
+                                    <li {if $ID == $edit_language_id}class="active"{/if}>
+                                        {if $current_tab}
+                                            {$lang_url = {url path={$page_url|default:$current_url nofilter} edit_language_id=$ID current_tab=$current_tab}}
+                                        {else}
+                                            {$lang_url = {url path={$page_url|default:$current_url nofilter} edit_language_id=$ID}}
+                                        {/if}
+                                        <a class="language-change-button" data-language-id="{$ID}"
+                                           href="{$lang_url nofilter}"
+                                           title="{intl l='Edit information in %lng' lng={$TITLE} d="translation.bo.default"}">
+                                            <img src="{image file="assets/img/flags/$CODE.png"}" alt=$TITLE/>
+                                        </a>
+                                    </li>
+                                {/loop}
+                            </ul>
+                        </div>
+                    </div>
 
-                <input type="submit" class="btn btn-success" />
-            </form>
-        </div>
+                    {form_hidden_fields form=$form}
+
+                    <div class="form-group">
+                        {form_field field="directories"}
+                            <select name={$name} id="translate.directories" class="form-control" multiple>
+                                {foreach $choices as $choice}
+                                    <option value="{$choice->value}"
+                                            {if $value == $choice->value}selected="selected"{/if}>{$choice->label}</option>
+                                {/foreach}
+                            </select>
+                        {/form_field}
+                    </div>
+
+                    <input type="submit" class="btn btn-block btn-info" value="{intl l="Export" d="translation.bo.default"}"/>
+                </form>
+            </div>
         {/form}
-
-        <hr/>
-
+    </div>
+    <div class="col-md-3 col-md-offset-1 general-block-decorator">
         <div class="title title-without-tabs">{intl l="Import translations" d="translation.bo.default"}</div>
+        <div class="alert alert-info">
+            {intl l="Zip the folder you have exported before with exactly the same structure and with your translation modification. And upload it here." d="translation.bo.default"}
+        </div>
         <div>
-            <form method="POST" enctype="multipart/form-data" id="translation.import.form" action="{url path="/admin/module/translation/import"}">
-                <input type="file" class="col-lg-2" name="file" accept=".zip"/>
-                <input type="submit" class="btn btn-success"/>
+            <form method="POST" enctype="multipart/form-data" id="translation.import.form"
+                  action="{url path="/admin/module/translation/import"}">
+                <div class="form-group">
+                    <input type="file" name="file" accept=".zip"/>
+                </div>
+                <input type="submit" class="btn btn-block btn-primary" value="{intl l="Import" d="translation.bo.default"}"/>
             </form>
         </div>
     </div>

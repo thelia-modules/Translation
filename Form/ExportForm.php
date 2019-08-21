@@ -28,12 +28,12 @@ class ExportForm extends BaseForm
                     'multiple' => true,
                     'choices' => [
                         "all" => Translator::getInstance()->trans('Every translations', [], Translation::DOMAIN_NAME),
+                        "core" => Translator::getInstance()->trans('Core Thelia', [], Translation::DOMAIN_NAME),
                         'frontOffice' => Translator::getInstance()->trans('Front-office templates', [], Translation::DOMAIN_NAME),
                         "backOffice" => Translator::getInstance()->trans('Back-office templates', [], Translation::DOMAIN_NAME),
                         "pdf" => Translator::getInstance()->trans('PDF templates', [], Translation::DOMAIN_NAME),
                         "email" => Translator::getInstance()->trans('E-mail templates', [], Translation::DOMAIN_NAME),
-                        "modules" => Translator::getInstance()->trans('Modules', [], Translation::DOMAIN_NAME),
-                        "core" => Translator::getInstance()->trans('Core Thelia', [], Translation::DOMAIN_NAME)
+                        "modules" => Translator::getInstance()->trans('Modules', [], Translation::DOMAIN_NAME)
                     ]
                 ]
             );
