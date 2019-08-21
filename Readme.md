@@ -1,6 +1,6 @@
 # Translation
 
-Add a short description here. You can also add a screenshot if needed.
+This module allow you to export and import translations in ```.po``` or ```.xlf```. 
 
 ## Installation
 
@@ -14,42 +14,26 @@ Add a short description here. You can also add a screenshot if needed.
 Add it in your main thelia composer.json file
 
 ```
-composer require your-vendor/translation-module:~1.0
+composer require thelia/translation-module:~1.0.0
 ```
 
 ## Usage
 
-Explain here how to use your module, how to configure it, etc.
+This module adds a new tab in back office called ```Translations```, on this new tab you can select the format of your translations (```.po``` or ```.xlf```), then you can select which part of your translations you want to export or you can import the translations that you have modified.
 
-## Hook
+**For the import to work, you must send a zip file, and it is very important than you respect the folder architecture of the export like :**
 
-If your module use one or more hook, fill this part. Explain which hooks are used.
+```
+po
+├── backOffice
+│   └── bo.default
+│       ├── messages.fr.po
+│       ├── message.en.po
+├── modules
+│   ├── <module name>
+│   │   ├── <domain name>
+│   │   │   ├── messages.fr.po
+│   │   │   ├── messages.en.po
 
-
-## Loop
-
-If your module declare one or more loop, describe them here like this :
-
-[loop name]
-
-### Input arguments
-
-|Argument |Description |
-|---      |--- |
-|**arg1** | describe arg1 with an exemple. |
-|**arg2** | describe arg2 with an exemple. |
-
-### Output arguments
-
-|Variable   |Description |
-|---        |--- |
-|$VAR1    | describe $VAR1 variable |
-|$VAR2    | describe $VAR2 variable |
-
-### Exemple
-
-Add a complete exemple of your loop
-
-## Other ?
-
-If you have other think to put, feel free to complete your readme as you want.
+... etc.
+```
