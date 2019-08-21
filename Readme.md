@@ -1,6 +1,7 @@
 # Translation
 
 This module allow you to export and import translations in ```.po``` or ```.xlf```. 
+If you need another format feel free to ask it in issues.
 
 ## Installation
 
