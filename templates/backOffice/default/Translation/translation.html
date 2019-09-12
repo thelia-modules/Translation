@@ -67,13 +67,40 @@
 
                     <div class="form-group">
                         {form_field field="directories"}
-                            <select name={$name} id="translate.directories" class="form-control" multiple>
+                            <select name={$name} id="translate.directories" class="form-control check-template" multiple>
                                 {foreach $choices as $choice}
                                     <option value="{$choice->value}"
                                             {if $value == $choice->value}selected="selected"{/if}>{$choice->label}</option>
                                 {/foreach}
                             </select>
                         {/form_field}
+                    </div>
+
+                    <div id="fo-directories" class="form-group hidden">
+                        <label class="control-label" for="fo_directory_select">{intl l='Front-office template you want to export' d="translation.bo.default"}</label>
+                        <select name="frontOffice_directory_select" class="form-control">
+                            {loop type="template" name="front-template-loop" template-type="front-office"}
+                                <option value="{$NAME}">{$NAME}</option>
+                            {/loop}
+                        </select>
+                    </div>
+
+                    <div id="mail-directories" class="form-group hidden">
+                        <label class="control-label" for="mail_directory_select">{intl l='Mail template you want to export' d="translation.bo.default"}</label>
+                        <select name="email_directory_select" class="form-control">
+                            {loop type="template" name="mail-template-loop" template-type="email"}
+                                <option value="{$NAME}">{$NAME}</option>
+                            {/loop}
+                        </select>
+                    </div>
+
+                    <div id="pdf-directories" class="form-group hidden">
+                        <label class="control-label" for="pdf_directory_select">{intl l='PDF template you want to export' d="translation.bo.default"}</label>
+                        <select name="pdf_directory_select" class="form-control">
+                            {loop type="template" name="pdf-template-loop" template-type="pdf"}
+                                <option value="{$NAME}">{$NAME}</option>
+                            {/loop}
+                        </select>
                     </div>
 
                     <input type="submit" class="btn btn-block btn-info" value="{intl l="Export" d="translation.bo.default"}"/>
@@ -96,4 +123,37 @@
             </form>
         </div>
     </div>
+{/block}
+
+{block name="javascript-last-call"}
+    <script>
+        $(function() {
+            $('.check-template').change(function () {
+                templates = {
+                     "frontOffice" : $("#fo-directories"),
+                      "email" : $("#mail-directories"),
+                      "pdf" : $("#pdf-directories")
+                };
+                for (var index in templates){
+                    checkTemplate(index, templates[index])
+                }
+            });
+
+            function checkTemplate(templateName, div){
+                reveal = false;
+                $(".check-template :selected").each(function () {
+                    if ($(this).val() === templateName || $(this).val() === "all") {
+                        reveal = true;
+                    }
+                });
+                if (reveal){
+                    div.removeClass("hidden");
+                }else {
+                    if (!div.hasClass("hidden")){
+                        div.addClass("hidden");
+                    }
+                }
+            }
+        })
+    </script>
 {/block}

@@ -60,40 +60,42 @@ class ExportController extends BaseAdminController
                 'core'
             ];
         }
-
         foreach ($dirs as $dir) {
             $this->exportTranslations($dir, $ext, $lang);
         }
 
-        $dirToZip = $translationsDir.'tmp'.DS.$ext;
+        if (file_exists($translationsDir.'tmp'.DS.$ext)){
+            $dirToZip = $translationsDir.'tmp'.DS.$ext;
 
-        $today = new \DateTime();
-        $name = "translation-export".$today->format("Y-m-d_H-i-s").".zip";
+            $today = new \DateTime();
+            $name = "translation-export".$today->format("Y-m-d_H-i-s").".zip";
 
-        $zipPath = $translationsDir."archives".DS.$name;
+            $zipPath = $translationsDir."archives".DS.$name;
 
-        $zip = new \ZipArchive();
-        $zip->open($zipPath, \ZipArchive::CREATE);
-        $this->folderToZip($dirToZip, $zip, strlen($translationsDir."tmp"));
-        $zip->close();
+            $zip = new \ZipArchive();
+            $zip->open($zipPath, \ZipArchive::CREATE);
+            $this->folderToZip($dirToZip, $zip, strlen($translationsDir."tmp"));
+            $zip->close();
 
-        Translation::deleteTmp();
+            Translation::deleteTmp();
 
-        $archives = scandir($translationsDir."archives");
-        $archives = array_slice($archives, 2);
-        if (count($archives) > 5)
-        {
-            for ($i = 0; $i < count($archives)-5; $i++){
-                unlink($translationsDir."archives".DS.$archives[$i]);
+            $archives = scandir($translationsDir."archives");
+            $archives = array_slice($archives, 2);
+            if (count($archives) > 5)
+            {
+                for ($i = 0; $i < count($archives)-5; $i++){
+                    unlink($translationsDir."archives".DS.$archives[$i]);
+                }
             }
+
+            header("Content-Type: application/zip");
+            header("Content-Disposition: attachment; filename=" . basename($zipPath));
+            header("Content-Length: " . filesize($zipPath));
+
+            readfile($zipPath);
         }
 
-        header("Content-Type: application/zip");
-        header("Content-Disposition: attachment; filename=" . basename($zipPath));
-        header("Content-Length: " . filesize($zipPath));
-
-        readfile($zipPath);
-
+        Translation::deleteTmp();
         return $this->generateRedirect("/admin/module/translation");
     }
 
@@ -115,6 +117,16 @@ class ExportController extends BaseAdminController
                 break;
             case "modules" :
                 $items = $this->getModulesDirectories();
+                break;
+            case "frontOffice" || "email" || "pdf" :
+                $templateDir = $this->getRequest()->get($dir."_directory_select");
+                $templateName = $this->camelCaseToUpperSnakeCase($dir);
+                $template = new TemplateDefinition(
+                    $templateDir,
+                    constant('Thelia\Core\Template\TemplateDefinition::'.$templateName)
+                );
+                $domain = $template->getTranslationDomain();
+                $items[$domain]["directory"] = $template->getAbsolutePath();
                 break;
             default :
                 $templateName = $this->camelCaseToUpperSnakeCase($dir);
