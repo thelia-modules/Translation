@@ -7,8 +7,6 @@ return array(
     'Every translations' => 'Toutes les traductions',
     'Front-office templates' => 'Templates Front-office',
     'Modules' => 'Modules',
-    'No module found for code \'%item\'' => 'Aucun module trouvé pour le code \'%item\'',
+    'No translation found' => 'Aucune traduction n\'a été trouvée',
     'PDF templates' => 'Templates PDF',
-    'Please select an extension file' => 'Veillez sélectionner une extension',
-    'Please select items to translate' => 'Veillez sélectionner un élément',
 );

@@ -1,7 +1,7 @@
 <?php
 
 return array(
-    'Choose the format you want for your translations.' => 'Export translations',
+    'Choose the format you want for your translations.' => 'Choose the format you want for your translations.',
     'Choose what part of translations you want to export.' => 'Choose what part of translations you want to export.',
     'Edit information in %lng' => 'Export translation in %lng',
     'Export' => 'Export',

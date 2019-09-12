@@ -96,6 +96,13 @@ class ExportController extends BaseAdminController
         }
 
         Translation::deleteTmp();
+
+        $this->setupFormErrorContext(
+            "No translation",
+            $this->getTranslator()->trans("No translation found"),
+            $form
+        );
+
         return $this->generateRedirect("/admin/module/translation");
     }
 

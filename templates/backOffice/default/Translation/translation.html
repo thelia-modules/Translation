@@ -42,6 +42,15 @@
                 </div>
                 <form method="POST" id="translation.export.form"
                       action="{url path="/admin/module/translation/export" lang_id="$edit_language_id"}">
+
+                    {if $form_error}
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="alert alert-danger">{$form_error_message}</div>
+                            </div>
+                        </div>
+                    {/if}
+
                     <div class="row inner-toolbar{if $page_bottom} inner-toolbar-bottom{/if}">
                         <div class="col-md-12 inner-actions">
                             <ul class="nav nav-pills">
