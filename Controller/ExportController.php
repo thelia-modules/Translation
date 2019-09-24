@@ -57,7 +57,7 @@ class ExportController extends BaseAdminController
                 'pdf',
                 'email',
                 'modules',
-                'core'
+                'core',
             ];
         }
         foreach ($dirs as $dir) {
@@ -68,7 +68,7 @@ class ExportController extends BaseAdminController
             $dirToZip = $translationsDir.'tmp'.DS.$ext;
 
             $today = new \DateTime();
-            $name = "translation-export".$today->format("Y-m-d_H-i-s").".zip";
+            $name = "translation-export-".$today->format("Y-m-d_H-i-s").".zip";
 
             $zipPath = $translationsDir."archives".DS.$name;
 
@@ -116,7 +116,7 @@ class ExportController extends BaseAdminController
     protected function exportTranslations($dir, $ext, Lang $lang)
     {
         $items = [];
-        
+
         switch ($dir){
             case "core":
                 $domain =  $dir;
@@ -125,7 +125,10 @@ class ExportController extends BaseAdminController
             case "modules" :
                 $items = $this->getModulesDirectories();
                 break;
-            case "frontOffice" || "email" || "pdf" :
+            case "frontOffice":
+            case "backOffice":
+            case "email":
+            case "pdf" :
                 $templateDir = $this->getRequest()->get($dir."_directory_select");
                 $templateName = $this->camelCaseToUpperSnakeCase($dir);
                 $template = new TemplateDefinition(
@@ -267,7 +270,7 @@ class ExportController extends BaseAdminController
         }
         return $directories;
     }
-    
+
     protected function getModule($name)
     {
         return $module = ModuleQuery::create()
@@ -319,7 +322,7 @@ class ExportController extends BaseAdminController
         while (false !== $f = readdir($handle)) {
             if ($f != '.' && $f != '..') {
                 $filePath = "$folder/$f";
-                $localPath = substr($filePath, $exclusiveLength);
+                $localPath = ltrim(str_replace('\\', '/', substr($filePath, $exclusiveLength)), '/');
 
                 if (is_file($filePath)) {
                     $zipFile->addFile($filePath, $localPath);
