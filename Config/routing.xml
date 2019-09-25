@@ -4,30 +4,6 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://symfony.com/schema/routing http://symfony.com/schema/routing/routing-1.0.xsd">
 
-    <!--
-
-    if a /admin/module/translation/ route is provided, a "Configuration" button will be displayed
-    for the module in the module list. Clicking this button will invoke this route.
-
-    <route id="my_route_id" path="/admin/module/translation">
-        <default key="_controller">Translation\Full\Class\Name\Of\YourConfigurationController::methodName</default>
-    </route>
-
-    <route id="my_route_id" path="/admin/module/translation/route-name">
-        <default key="_controller">Translation\Full\Class\Name\Of\YourAdminController::methodName</default>
-    </route>
-
-    <route id="my_route_id" path="/my/route/name">
-        <default key="_controller">Translation\Full\Class\Name\Of\YourOtherController::methodName</default>
-    </route>
-
-    ...add as many routes as required.
-
-    <route>
-    ...
-    </route>
-    -->
-
     <route id="admin.translation.menu" path="/admin/module/translation">
         <default key="_controller">Translation\Controller\AdminController::showPage</default>
     </route>
@@ -39,8 +15,12 @@
     <route id="translation.import" path="/admin/module/translation/import">
         <default key="_controller">Translation\Controller\ImportController::importAction</default>
     </route>
+
+    <route id="translation.revert" path="/admin/module/translation/revert">
+        <default key="_controller">Translation\Controller\AdminController::revertAction</default>
+    </route>
+
     <route id="translation.extension" path="/admin/module/translation/extension">
         <default key="_controller">Translation\Controller\AdminController::setExtensionAction</default>
     </route>
-
 </routes>

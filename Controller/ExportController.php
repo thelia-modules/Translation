@@ -15,6 +15,7 @@ use Thelia\Model\Lang;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Module;
 use Thelia\Model\ModuleQuery;
+use Thelia\Tools\URL;
 use Translation\Form\ExportForm;
 use Translation\Translation;
 
@@ -100,7 +101,7 @@ class ExportController extends BaseAdminController
             $form
         );
 
-        return $this->generateRedirect('/admin/module/translation');
+        return $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/translation'));
     }
 
 
@@ -185,12 +186,12 @@ class ExportController extends BaseAdminController
                 }
             }
 
-            if ($arrayTranslations != null){
+            if ($arrayTranslations !== null){
                 $catalogue = new MessageCatalogue($lang->getCode());
                 $catalogue->add($arrayTranslations);
 
                 $dumper->formatCatalogue($catalogue, 'messages');
-                $mod = "";
+                $mod = '';
                 if ($dir === 'modules'){
                     $key = explode('.', $domain);
                     $mod = DS.$key[0];

@@ -7,137 +7,170 @@
 {block name="check-module"}Translation{/block}
 
 {block name="main-content"}
-    <div class="col-md-3 general-block-decorator">
-        <div class="title title-without-tabs">{intl l="Select extension" d="translation.bo.default"}</div>
-
-        <p>{intl l="Choose the format you want for your translations." d="translation.bo.default"}</p>
-
-        {form name="translation-extension-form"}
-            <form method="POST" action={url path="/admin/module/translation/extension"}>
-
-                {form_hidden_fields form=$form}
-                <div class="form-group">
-
-                    {form_field field="extension"}
-                        <select name="{$name}" class="form-control" id="tranlation.extention">
-                            {foreach $choices as $choice}
-                                <option value="{$choice->value}"
-                                        {if $value == $choice->value}selected="selected"{/if}>{$choice->label}</option>
-                            {/foreach}
-                        </select>
-                    {/form_field}
-                </div>
-                <input type="submit" class="btn btn-block btn-success">
-            </form>
-        {/form}
+    <div class="col-md-12">
+        <div class="alert alert-info">
+        {intl l="This module implements a translation system which uses standard format files (PO, Xlif)
+         instead of Thelia's integrated translation system. You can export all the texts to be translated, use an external translation tool
+         to translate them, and import the result that will be used instead of standard Thelia translations." d="translation.bo.default"}
+        </div>
     </div>
 
-    <div class="col-md-4 col-md-offset-1 general-block-decorator">
-        <div class="title title-without-tabs">{intl l="Export translations" d="translation.bo.default"}</div>
-        {form name="translation-export-form"}
-            <div class="form-container">
+    <div class="col-md-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="general-block-decorator">
+                    <div class="title title-without-tabs">{intl l="Select extension" d="translation.bo.default"}</div>
 
-                <p>{intl l="Choose the language and the transaltions domains you want to export." d="translation.bo.default"}</p>
+                    <p>{intl l="Choose the format you want for your translations." d="translation.bo.default"}</p>
 
-                <form method="POST" id="translation.export.form"
-                      action="{url path="/admin/module/translation/export" lang_id="$edit_language_id"}">
+                    {form name="translation-extension-form"}
+                        <form method="POST" action={url path="/admin/module/translation/extension"}>
 
-                    {if $form_error}
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="alert alert-danger">{$form_error_message}</div>
+                            {form_hidden_fields form=$form}
+                            <div class="form-group">
+
+                                {form_field field="extension"}
+                                    <select name="{$name}" class="form-control" id="tranlation.extention">
+                                        {foreach $choices as $choice}
+                                            <option value="{$choice->value}"
+                                                    {if $value == $choice->value}selected="selected"{/if}>{$choice->label}</option>
+                                        {/foreach}
+                                    </select>
+                                {/form_field}
+                            </div>
+                            <input type="submit" class="btn btn-block btn-success">
+                        </form>
+                    {/form}
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div class="general-block-decorator">
+                    <div class="title title-without-tabs">{intl l="Current status" d="translation.bo.default"}</div>
+
+                    {if $in_use}
+                        <div class="alert alert-success">{intl l="You're using the external translations. Click the revert button to go back to standard Thelia translation system." d="translation.bo.default"}</div>
+
+                        <a href="{url path="/admin/module/translation/revert"}" class="btn btn-danger">{intl l="Revert" d="translation.bo.default"}</a>
+                    {else}
+                        <div class="alert alert-warning">{intl l="You're using the standard Thelia translation system. Please import translations to use the external translations" d="translation.bo.default"}</div>
+                    {/if}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="general-block-decorator">
+            <div class="title title-without-tabs">{intl l="Export translations" d="translation.bo.default"}</div>
+            {form name="translation-export-form"}
+                <div class="form-container">
+
+                    <p>{intl l="Choose the language and the translations domains you want to export." d="translation.bo.default"}</p>
+
+                    <form method="POST" id="translation.export.form"
+                          action="{url path="/admin/module/translation/export" lang_id="$edit_language_id"}">
+
+                        {if $form_error}
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="alert alert-danger">{$form_error_message}</div>
+                                </div>
+                            </div>
+                        {/if}
+
+                        <div class="row inner-toolbar{if $page_bottom} inner-toolbar-bottom{/if}">
+                            <div class="col-md-12 inner-actions">
+                                <ul class="nav nav-pills">
+                                    {loop name="lang_list" type="lang" backend_context="1"}
+                                        <li {if $ID == $edit_language_id}class="active"{/if}>
+                                            {if $current_tab}
+                                                {$lang_url = {url path={$page_url|default:$current_url nofilter} edit_language_id=$ID current_tab=$current_tab}}
+                                            {else}
+                                                {$lang_url = {url path={$page_url|default:$current_url nofilter} edit_language_id=$ID}}
+                                            {/if}
+                                            <a class="language-change-button" data-language-id="{$ID}"
+                                               href="{$lang_url nofilter}"
+                                               title="{intl l='Edit information in %lng' lng={$TITLE} d="translation.bo.default"}">
+                                                <img src="{image file="assets/img/flags/$CODE.png"}" alt=$TITLE/>
+                                            </a>
+                                        </li>
+                                    {/loop}
+                                </ul>
                             </div>
                         </div>
-                    {/if}
 
-                    <div class="row inner-toolbar{if $page_bottom} inner-toolbar-bottom{/if}">
-                        <div class="col-md-12 inner-actions">
-                            <ul class="nav nav-pills">
-                                {loop name="lang_list" type="lang" backend_context="1"}
-                                    <li {if $ID == $edit_language_id}class="active"{/if}>
-                                        {if $current_tab}
-                                            {$lang_url = {url path={$page_url|default:$current_url nofilter} edit_language_id=$ID current_tab=$current_tab}}
-                                        {else}
-                                            {$lang_url = {url path={$page_url|default:$current_url nofilter} edit_language_id=$ID}}
-                                        {/if}
-                                        <a class="language-change-button" data-language-id="{$ID}"
-                                           href="{$lang_url nofilter}"
-                                           title="{intl l='Edit information in %lng' lng={$TITLE} d="translation.bo.default"}">
-                                            <img src="{image file="assets/img/flags/$CODE.png"}" alt=$TITLE/>
-                                        </a>
-                                    </li>
-                                {/loop}
-                            </ul>
+                        {form_hidden_fields form=$form}
+
+                        <div class="form-group">
+                            {form_field field="directories"}
+                                <select size="7" name={$name} id="translate.directories" class="form-control check-template" multiple>
+                                    {foreach $choices as $choice}
+                                        <option value="{$choice->value}"
+                                                {if $value == $choice->value}selected="selected"{/if}>{$choice->label}</option>
+                                    {/foreach}
+                                </select>
+                            {/form_field}
                         </div>
-                    </div>
 
-                    {form_hidden_fields form=$form}
-
-                    <div class="form-group">
-                        {form_field field="directories"}
-                            <select size="7" name={$name} id="translate.directories" class="form-control check-template" multiple>
-                                {foreach $choices as $choice}
-                                    <option value="{$choice->value}"
-                                            {if $value == $choice->value}selected="selected"{/if}>{$choice->label}</option>
-                                {/foreach}
+                        <div id="fo-directories" class="form-group hidden">
+                            <label class="control-label" for="fo_directory_select">{intl l='Front-office template you want to export' d="translation.bo.default"}</label>
+                            <select id="fo_directory_select" name="frontOffice_directory_select" class="form-control">
+                                {loop type="template" name="front-template-loop" template-type="front-office"}
+                                    <option value="{$NAME}">{$NAME}</option>
+                                {/loop}
                             </select>
-                        {/form_field}
-                    </div>
+                        </div>
 
-                    <div id="fo-directories" class="form-group hidden">
-                        <label class="control-label" for="fo_directory_select">{intl l='Front-office template you want to export' d="translation.bo.default"}</label>
-                        <select id="fo_directory_select" name="frontOffice_directory_select" class="form-control">
-                            {loop type="template" name="front-template-loop" template-type="front-office"}
-                                <option value="{$NAME}">{$NAME}</option>
-                            {/loop}
-                        </select>
-                    </div>
+                        <div id="bo-directories" class="form-group hidden">
+                            <label class="control-label" for="bo_directory_select">{intl l='Back-office template you want to export' d="translation.bo.default"}</label>
+                            <select id="bo_directory_select" name="backOffice_directory_select" class="form-control">
+                                {loop type="template" name="back-template-loop" template-type="back-office"}
+                                    <option value="{$NAME}">{$NAME}</option>
+                                {/loop}
+                            </select>
+                        </div>
 
-                    <div id="bo-directories" class="form-group hidden">
-                        <label class="control-label" for="bo_directory_select">{intl l='Back-office template you want to export' d="translation.bo.default"}</label>
-                        <select id="bo_directory_select" name="backOffice_directory_select" class="form-control">
-                            {loop type="template" name="back-template-loop" template-type="back-office"}
-                                <option value="{$NAME}">{$NAME}</option>
-                            {/loop}
-                        </select>
-                    </div>
+                        <div id="mail-directories" class="form-group hidden">
+                            <label class="control-label" for="mail_directory_select">{intl l='Mail template you want to export' d="translation.bo.default"}</label>
+                            <select id="mail_directory_select" name="email_directory_select" class="form-control">
+                                {loop type="template" name="mail-template-loop" template-type="email"}
+                                    <option value="{$NAME}">{$NAME}</option>
+                                {/loop}
+                            </select>
+                        </div>
 
-                    <div id="mail-directories" class="form-group hidden">
-                        <label class="control-label" for="mail_directory_select">{intl l='Mail template you want to export' d="translation.bo.default"}</label>
-                        <select id="mail_directory_select" name="email_directory_select" class="form-control">
-                            {loop type="template" name="mail-template-loop" template-type="email"}
-                                <option value="{$NAME}">{$NAME}</option>
-                            {/loop}
-                        </select>
-                    </div>
+                        <div id="pdf-directories" class="form-group hidden">
+                            <label class="control-label" for="pdf_directory_select">{intl l='PDF template you want to export' d="translation.bo.default"}</label>
+                            <select id="pdf_directory_select" name="pdf_directory_select" class="form-control">
+                                {loop type="template" name="pdf-template-loop" template-type="pdf"}
+                                    <option value="{$NAME}">{$NAME}</option>
+                                {/loop}
+                            </select>
+                        </div>
 
-                    <div id="pdf-directories" class="form-group hidden">
-                        <label class="control-label" for="pdf_directory_select">{intl l='PDF template you want to export' d="translation.bo.default"}</label>
-                        <select id="pdf_directory_select" name="pdf_directory_select" class="form-control">
-                            {loop type="template" name="pdf-template-loop" template-type="pdf"}
-                                <option value="{$NAME}">{$NAME}</option>
-                            {/loop}
-                        </select>
-                    </div>
+                        <input type="submit" class="btn btn-block btn-info" value="{intl l="Export" d="translation.bo.default"}"/>
+                    </form>
+                </div>
+            {/form}
+        </div>
+    </div>
 
-                    <input type="submit" class="btn btn-block btn-info" value="{intl l="Export" d="translation.bo.default"}"/>
+    <div class="col-md-4">
+        <div class="general-block-decorator">
+            <div class="title title-without-tabs">{intl l="Import translations" d="translation.bo.default"}</div>
+
+            <p>{intl l="Zip the folder you have exported before with exactly the same structure and with your translation modification. And upload it here." d="translation.bo.default"}</p>
+
+            <div>
+                <form method="POST" enctype="multipart/form-data" id="translation.import.form"
+                      action="{url path="/admin/module/translation/import"}">
+                    <div class="form-group">
+                        <input type="file" required name="file" accept=".zip"/>
+                    </div>
+                    <input type="submit" class="btn btn-block btn-primary" value="{intl l="Import" d="translation.bo.default"}"/>
                 </form>
             </div>
-        {/form}
-    </div>
-    <div class="col-md-3 col-md-offset-1 general-block-decorator">
-        <div class="title title-without-tabs">{intl l="Import translations" d="translation.bo.default"}</div>
-
-        <p>{intl l="Zip the folder you have exported before with exactly the same structure and with your translation modification. And upload it here." d="translation.bo.default"}</p>
-
-        <div>
-            <form method="POST" enctype="multipart/form-data" id="translation.import.form"
-                  action="{url path="/admin/module/translation/import"}">
-                <div class="form-group">
-                    <input type="file" name="file" accept=".zip"/>
-                </div>
-                <input type="submit" class="btn btn-block btn-primary" value="{intl l="Import" d="translation.bo.default"}"/>
-            </form>
         </div>
     </div>
 {/block}
