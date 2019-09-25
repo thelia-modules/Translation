@@ -49,7 +49,10 @@ class BootListener implements EventSubscriberInterface
                 $locale = array_reverse(explode('.', $fileInfo->getBasename()))[1];
 
                 if (null === $lang = LangQuery::create()->filterByLocale($locale)->findOne()) {
-                    throw new \InvalidArgumentException("Failed to find a lang for locale '$locale'. Please check translation file name.");
+                    // Try to find the lang using the code (compatibility with pre-1.0.3 version)
+                    if (null === $lang = LangQuery::create()->filterByCode($locale)->findOne()) {
+                        throw new \InvalidArgumentException("Failed to find a lang for locale or code '$locale'. Please check translation file name.");
+                    }
                 }
 
                 $pathArray = explode(DS, $fileInfo->getPath());
