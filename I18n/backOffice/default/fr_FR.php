@@ -2,15 +2,15 @@
 
 return array(
     'Back-office template you want to export' => 'Template back-office que vous voulez exporter',
-    'Choose the format you want for your translations.' => 'Choisissez le format que vous souhaitez utiliser pour exporter les traductions.',
-    'Choose the language and the translations domains you want to export.' => 'Choisissez la langue et les domaines de traduction que vous souhaitez exporter.',
-    'Current status' => 'État courant',
-    'Edit information in %lng' => 'Exporter les traductions en %lng',
+    'Choose the format you want for your translations.' => 'Choisissez le format que vous souhaitez utiliser pour exporter les textes à traduire.',
+    'Choose the language and the translations domains you want to export.' => 'Choisissez la langue et les domaines de traduction des textes que vous souhaitez exporter.',
+    'Current status' => 'État actuel',
+    'Edit information in %lng' => 'Exporter les textes en %lng',
     'Export' => 'Exporter',
-    'Export translations' => 'Exporter les traductions',
+    'Export translations' => 'Exporter les textes à traduire',
     'Front-office template you want to export' => 'Template front-office que vous voulez exporter',
     'Import' => 'Importer',
-    'Import translations' => 'Importer les traductions',
+    'Import translations' => 'Importer les textes traduits',
     'Mail template you want to export' => 'Template d\'e-mail que vous voulez exporter',
     'PDF template you want to export' => 'Template PDF que vous voulez exporter',
     'Revert' => 'Retour au standard',
@@ -21,5 +21,5 @@ return array(
     'Translations' => 'Traductions externes',
     'You\'re using the external translations. Click the revert button to go back to standard Thelia translation system.' => 'Vous utilisez le système de traduction externe. Cliquez le bouton "Retour au standard" pour revenir au système de traduction standard de Thelia.',
     'You\'re using the standard Thelia translation system. Please import translations to use the external translations' => 'Vous utilisez le système de traduction standard de Thelia. Importez des traductions pour utiliser le système de traduction externe.',
-    'Zip the folder you have exported before with exactly the same structure and with your translation modification. And upload it here.' => 'Compressez le dossier qui contient les fichiers traduits avec <strong>exactement la même structure</strong> que le fichier exporté, et téléversez-le ici.',
+    'Zip the folder you have exported before with exactly the same structure and with your translation modification. And upload it here.' => 'Compressez au format Zip le dossier qui contient les fichiers traduits avec <strong>exactement la même structure</strong> que le fichier exporté, et téléversez-le ici.',
 );
