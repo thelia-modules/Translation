@@ -38,3 +38,6 @@ po
 
 ... etc.
 ```
+
+Once translations have been imported, they will **completely replace** the standard Thelia translations. To revert to the standard behaviour,
+delete the local/translations directory.

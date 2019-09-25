@@ -31,9 +31,9 @@ class BootListener implements EventSubscriberInterface
     {
         $translationDir = Translation::TRANSLATIONS_DIR;
         $ext = Translation::getConfigValue("extension");
-        $Directory = $translationDir . $ext;
-        if (file_exists($Directory)){
-            $this->addTranslationsResources($Directory, $ext);
+        $directory = $translationDir . $ext;
+        if (file_exists($directory)){
+            $this->addTranslationsResources($directory, $ext);
         }
     }
 
@@ -52,7 +52,7 @@ class BootListener implements EventSubscriberInterface
                 if ($ext === $fileInfo->getExtension()){
                     $langCode = explode('.', $fileInfo->getBasename())[1];
                     $lang = LangQuery::create()->filterByCode($langCode)->findOne();
-                    $pathArray = explode('/', $fileInfo->getPath());
+                    $pathArray = explode(DS, $fileInfo->getPath());
                     $domain = end($pathArray);
                     $this->translator->addResource(
                         $fileInfo->getExtension(),

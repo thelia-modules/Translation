@@ -9,7 +9,9 @@
 namespace Translation\Controller;
 
 
+use Symfony\Component\Filesystem\Filesystem;
 use Thelia\Controller\Admin\BaseAdminController;
+use Thelia\Tools\URL;
 use Translation\Form\ExtensionForm;
 use Translation\Translation;
 
@@ -18,7 +20,10 @@ class AdminController extends BaseAdminController
 {
     public function showPage()
     {
-        return $this->render('Translation/translation');
+        // Is the module active ?
+        $translationInUse = is_dir($this->getTranslationDir());
+
+        return $this->render('Translation/translation', ['in_use' => $translationInUse]);
     }
 
     public function setExtensionAction()
@@ -27,10 +32,24 @@ class AdminController extends BaseAdminController
 
         $extensionForm = $this->validateForm($form);
 
-        $extension = $extensionForm->get("extension")->getData();
+        $extension = $extensionForm->get('extension')->getData();
 
-        Translation::setConfigValue("extension", $extension);
+        Translation::setConfigValue('extension', $extension);
 
-        return $this->generateRedirect("/admin/module/translation");
+        return $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/translation'));
+    }
+
+    public function revertAction()
+    {
+        $fs = new Filesystem();
+
+        $fs->remove($this->getTranslationDir());
+
+        return $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/translation'));
+    }
+
+    protected function getTranslationDir()
+    {
+        return Translation::TRANSLATIONS_DIR . Translation::getConfigValue('extension', 'undefined');
     }
 }
