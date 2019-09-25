@@ -3,8 +3,8 @@
 namespace Translation\Controller;
 
 
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Translation\Dumper\PhpFileDumper;
-use Symfony\Component\Translation\Dumper\PoFileDumper;
 use Symfony\Component\Translation\Dumper\XliffFileDumper;
 use Symfony\Component\Translation\MessageCatalogue;
 use Thelia\Controller\Admin\BaseAdminController;
@@ -16,6 +16,7 @@ use Thelia\Model\LangQuery;
 use Thelia\Model\Module;
 use Thelia\Model\ModuleQuery;
 use Thelia\Tools\URL;
+use Translation\Dumper\PoFileDumperWithComments;
 use Translation\Form\ExportForm;
 use Translation\Translation;
 
@@ -48,7 +49,7 @@ class ExportController extends BaseAdminController
         $dirs = $exportForm->get('directories')->getData();
         $ext = Translation::getConfigValue('extension');
 
-        if (in_array('all', $dirs)){
+        if (in_array('all', $dirs)) {
             $dirs = [
                 'frontOffice',
                 'backOffice',
@@ -79,6 +80,7 @@ class ExportController extends BaseAdminController
 
             $archives = scandir($translationsArchiveDir);
             $archives = array_slice($archives, 2);
+
             if (count($archives) > 5)
             {
                 for ($i = 0; $i < count($archives)-5; $i++){
@@ -86,22 +88,28 @@ class ExportController extends BaseAdminController
                 }
             }
 
-            header('Content-Type: application/zip');
-            header('Content-Disposition: attachment; filename=' . basename($zipPath));
-            header('Content-Length: ' . filesize($zipPath));
+            $response = new StreamedResponse();
 
-            readfile($zipPath);
+            $response->headers->set('Content-Type', 'application/zip');
+            $response->headers->set('Content-Disposition', 'attachment; filename=' . basename($zipPath));
+            $response->headers->set('Content-Length', filesize($zipPath));
+
+            $response->setCallback(function() use ($zipPath) {
+                readfile($zipPath);
+            });
+        } else {
+            $this->setupFormErrorContext(
+                'No translation' ,
+                $this->getTranslator()->trans('No translation found'),
+                $form
+            );
+
+            $response = $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/translation'));
         }
 
         Translation::deleteTmp();
 
-        $this->setupFormErrorContext(
-            'No translation' ,
-            $this->getTranslator()->trans('No translation found'),
-            $form
-        );
-
-        return $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/translation'));
+        return $response;
     }
 
 
@@ -151,7 +159,7 @@ class ExportController extends BaseAdminController
 
         switch ($ext){
             case 'po':
-                $dumper = new PoFileDumper();
+                $dumper = new PoFileDumperWithComments();
                 break;
             case 'xlf':
                 $dumper = new XliffFileDumper();
@@ -178,26 +186,37 @@ class ExportController extends BaseAdminController
                 $domain
             );
 
+            $keyMetaData = [];
+
             $this->getDispatcher()->dispatch(TheliaEvents::TRANSLATION_GET_STRINGS, $event);
-            $arrayTranslations = [];
-            if (null !== $translatableStrings = $event->getTranslatableStrings()){
+            if (null !== $translatableStrings = $event->getTranslatableStrings()) {
+                $catalogue = new MessageCatalogue($lang->getLocale());
+
                 foreach ($translatableStrings as $translation) {
-                    $arrayTranslations[$translation['text']] = $translation['translation'];
-                }
-            }
+                    $key = $translation['text'];
 
-            if ($arrayTranslations !== null){
-                $catalogue = new MessageCatalogue($lang->getCode());
-                $catalogue->add($arrayTranslations);
+                    if (!isset($keyMetaData[$key])) {
+                        $keyMetaData[$key] = '';
+                    }
 
-                $dumper->formatCatalogue($catalogue, 'messages');
-                $mod = '';
-                if ($dir === 'modules'){
-                    $key = explode('.', $domain);
-                    $mod = DS.$key[0];
+                    // Store files where this string exists. We cannot get the exact line in the file, let's use 1.
+                    foreach ($translation['files'] as $file) {
+                        $keyMetaData[$key] .= "$file:1 ";
+                    }
+
+                    $catalogue->set($key, $translation['translation'], $domain);
                 }
-                $path = $tmpDir.DS.$ext.DS.$dir.$mod.DS.$domain;
-                $dumper->dump($catalogue, ['path' => $path]);
+
+                if ($dir === 'modules') {
+                    $key = explode('.' , $domain);
+                    $mod = DS . $key[0];
+                } else {
+                    $mod = '';
+                }
+
+                $path = $tmpDir . DS . $ext . DS . $dir . $mod . DS . $domain;
+
+                $dumper->dump($catalogue , ['path' => $path , 'metadata' => $keyMetaData]);
             }
         }
     }
