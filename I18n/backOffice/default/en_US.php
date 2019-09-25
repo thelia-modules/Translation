@@ -10,11 +10,11 @@ return array(
     'Export translations' => 'Export translations',
     'Front-office template you want to export' => 'Front-office template you want to export',
     'Import' => 'Import',
-    'Import translations' => 'Import translations',
+    'Import translations' => 'Import translated texts',
     'Mail template you want to export' => 'Mail template you want to export',
     'PDF template you want to export' => 'PDF template you want to export',
     'Revert' => 'Revert',
-    'Select extension' => 'Select extension',
+    'Select extension' => 'Import/Export format',
     'This module implements a translation system which uses standard format files (PO, Xlif)
          instead of Thelia\'s integrated translation system. You can export all the texts to be translated, use an external translation tool
          to translate them, and import the result that will be used instead of standard Thelia translations.' => 'This module implements a translation system which uses standard format files (PO, Xlif)         instead of Thelia\'s integrated translation system. You can export all the texts to be translated, use an external translation tool         to translate them, and import the result that will be used instead of standard Thelia translations.',
