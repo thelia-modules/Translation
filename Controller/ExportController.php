@@ -270,17 +270,17 @@ class ExportController extends BaseAdminController
                 }
 
                 foreach ($types as $dirName => $type){
-                    $getDomainFunction = 'get'.$type.'TemplateTranslationDomain';
-                    $getPathFunction = 'getAbsolute'.$type.'TemplatePath';
-                    $templateNames = [];
-                    if (file_exists($module->getAbsoluteBaseDir().DS.'templates'.DS.$dirName)){
-                        $templateNames = $this->getTemplateNames($module->getAbsoluteBaseDir().DS.'templates'.DS.$dirName);
-                    }
-
                     if ($type === 'Core') {
                         $getDomainFunction = 'getTranslationDomain';
                         $getPathFunction = 'getAbsoluteBaseDir';
                         $templateNames[] = $type;
+                    } else {
+                        $getDomainFunction = 'get'.$type.'TemplateTranslationDomain';
+                        $getPathFunction = 'getAbsolute'.$type.'TemplatePath';
+                        $templateNames = [];
+                        if (file_exists($module->getAbsoluteBaseDir().DS.'templates'.DS.$dirName)){
+                            $templateNames = $this->getTemplateNames($module->getAbsoluteBaseDir().DS.'templates'.DS.$dirName);
+                        }
                     }
 
                     foreach ($templateNames as $templateName){
