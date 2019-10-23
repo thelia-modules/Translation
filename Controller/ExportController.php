@@ -250,8 +250,16 @@ class ExportController extends BaseAdminController
     {
         $modulesNames = scandir(THELIA_LOCAL_DIR.'modules'.DS);
         $directories = [];
-        $types = [ 'Core', 'FrontOffice', 'BackOffice', 'Email', 'Pdf'];
+        $types = [
+            'core' => 'Core',
+            'frontOffice' => 'FrontOffice',
+            'backOffice'  => 'BackOffice',
+            'email' => 'Email',
+            'pdf' => 'Pdf'
+        ];
+
         $domain = null;
+
         foreach ($modulesNames as $moduleName){
             if ($moduleName[0] !== '.'){
                 /** @var Module $module */
@@ -261,18 +269,18 @@ class ExportController extends BaseAdminController
                     continue;
                 }
 
-                foreach ($types as $type){
-                    $getDomainFunction = 'get'.$type.'TemplateTranslationDomain';
-                    $getPathFunction = 'getAbsolute'.$type.'TemplatePath';
-                    $templateNames = [];
-                    if (file_exists($module->getAbsoluteBaseDir().DS.'templates'.DS.$type)){
-                        $templateNames = $this->getTemplateNames($module->getAbsoluteBaseDir().DS.'templates'.DS.$type);
-                    }
-
+                foreach ($types as $dirName => $type){
                     if ($type === 'Core') {
                         $getDomainFunction = 'getTranslationDomain';
                         $getPathFunction = 'getAbsoluteBaseDir';
                         $templateNames[] = $type;
+                    } else {
+                        $getDomainFunction = 'get'.$type.'TemplateTranslationDomain';
+                        $getPathFunction = 'getAbsolute'.$type.'TemplatePath';
+                        $templateNames = [];
+                        if (file_exists($module->getAbsoluteBaseDir().DS.'templates'.DS.$dirName)){
+                            $templateNames = $this->getTemplateNames($module->getAbsoluteBaseDir().DS.'templates'.DS.$dirName);
+                        }
                     }
 
                     foreach ($templateNames as $templateName){
@@ -286,6 +294,7 @@ class ExportController extends BaseAdminController
                 }
             }
         }
+
         return $directories;
     }
 
