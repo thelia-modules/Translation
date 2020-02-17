@@ -15,6 +15,18 @@
         </div>
     </div>
 
+    {if $error}
+    <div class="col-md-12">
+        <div class="alert alert-danger">
+          {if $error == 1}
+          {intl l="Failed to update this file, this file doesn't seem to exist in this translation system." d="translation.bo.default"}
+          {else}
+          {intl l="Please import a valid file." d="translation.bo.default"}
+          {/if}
+        </div>
+    </div>
+    {/if}
+
     <div class="col-md-4">
         <div class="row">
             <div class="col-md-12">

@@ -26,6 +26,7 @@ class ImportController extends BaseAdminController
                return $oFile->getPath();
             }
         }
+        return false;
     }
 
     public function importAction()
@@ -65,9 +66,14 @@ class ImportController extends BaseAdminController
             Translation ::deleteTmp();
           } else {
             $filePath = $this->getFilePath(Translation::TRANSLATIONS_DIR . $ext, $originalName);
+            if (!$filePath)
+              return $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/translation', ['error' => '1']));
             copy($importFile, $filePath . DS . $originalName);
+
           }
         }
+        else
+          return $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/translation', ['error' => '2']));
 
         return $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/translation'));
     }
