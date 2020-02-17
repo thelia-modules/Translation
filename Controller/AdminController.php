@@ -22,8 +22,9 @@ class AdminController extends BaseAdminController
     {
         // Is the module active ?
         $translationInUse = is_dir($this->getTranslationDir());
+        $ext = Translation::getConfigValue('extension');
 
-        return $this->render('Translation/translation', ['in_use' => $translationInUse]);
+        return $this->render('Translation/translation', ['in_use' => $translationInUse, 'ext' => $ext]);
     }
 
     public function setExtensionAction()
