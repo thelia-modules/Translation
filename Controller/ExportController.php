@@ -205,6 +205,9 @@ class ExportController extends BaseAdminController
                     }
 
                     $catalogue->set($key, $translation['translation'], $domain);
+                    if ($translation['custom_fallback'] !== '') {
+                        $catalogue->set($key, $translation['custom_fallback'], $domain);
+                    }
                 }
 
                 if ($dir === 'modules') {
