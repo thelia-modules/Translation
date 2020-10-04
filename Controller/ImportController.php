@@ -13,9 +13,22 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Thelia\Controller\Admin\BaseAdminController;
 use Thelia\Tools\URL;
 use Translation\Translation;
+use \RecursiveDirectoryIterator;
+use \RecursiveIteratorIterator;
 
 class ImportController extends BaseAdminController
 {
+    public function getFilePath($dirPath, $fileName) {
+        $oDirectory = new RecursiveDirectoryIterator($dirPath);
+        $oIterator = new RecursiveIteratorIterator($oDirectory);
+        foreach($oIterator as $oFile) {
+            if ($oFile->getFilename() == $fileName) {
+               return $oFile->getPath();
+            }
+        }
+        return false;
+    }
+
     public function importAction()
     {
         $path = Translation::TRANSLATIONS_DIR . 'tmp';
@@ -32,20 +45,35 @@ class ImportController extends BaseAdminController
 
         /** @var UploadedFile $importFile */
         $importFile = $this->getRequest()->files->get('file');
+        if ($importFile) {
+          $originalExt = $importFile->getClientOriginalExtension();
+          $originalName = $importFile->getClientOriginalName();
 
-        $today = new \DateTime();
-        $fileName = 'translation-import-' . $today->format('Y-m-d_H-i-s') . '.zip';
+          if ($originalExt == 'zip') {
 
-        copy($importFile , $path . DS . $fileName);
+            $today = new \DateTime();
+            $fileName = 'translation-import-' . $today->format('Y-m-d_H-i-s') . '.zip';
 
-        $zip = new \ZipArchive();
-        $zip->open($path . DS . $fileName);
-        $zip->extractTo($path);
-        $zip->close();
+            copy($importFile , $path . DS . $fileName);
 
-        unlink($path . DS . $fileName);
-        $this->moveDirectory($path , Translation::TRANSLATIONS_DIR . $ext , $ext);
-        Translation ::deleteTmp();
+            $zip = new \ZipArchive();
+            $zip->open($path . DS . $fileName);
+            $zip->extractTo($path);
+            $zip->close();
+
+            unlink($path . DS . $fileName);
+            $this->moveDirectory($path , Translation::TRANSLATIONS_DIR . $ext , $ext);
+            Translation ::deleteTmp();
+          } else {
+            $filePath = $this->getFilePath(Translation::TRANSLATIONS_DIR . $ext, $originalName);
+            if (!$filePath)
+              return $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/translation', ['error' => '1']));
+            copy($importFile, $filePath . DS . $originalName);
+
+          }
+        }
+        else
+          return $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/translation', ['error' => '2']));
 
         return $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/translation'));
     }
@@ -87,4 +115,3 @@ class ImportController extends BaseAdminController
         }
     }
 }
-
