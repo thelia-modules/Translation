@@ -79,12 +79,12 @@
                             </div>
                         {/if}
 
-                        <div class="row inner-toolbar{if $page_bottom} inner-toolbar-bottom{/if}">
+                        <div class="row inner-toolbar{if $page_bottom|default:null} inner-toolbar-bottom{/if}">
                             <div class="col-md-12 inner-actions">
                                 <ul class="nav nav-pills">
                                     {loop name="lang_list" type="lang" backend_context="1"}
                                         <li {if $ID == $edit_language_id}class="active"{/if}>
-                                            {if $current_tab}
+                                            {if $current_tab|default:null}
                                                 {$lang_url = {url path={$page_url|default:$current_url nofilter} edit_language_id=$ID current_tab=$current_tab}}
                                             {else}
                                                 {$lang_url = {url path={$page_url|default:$current_url nofilter} edit_language_id=$ID}}

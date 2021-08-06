@@ -9,12 +9,12 @@
         <form name="translation-extension-form" class="Translation\Form\ExtensionForm" />
     </forms>
 
-    <services>
+    <!--<services>
        <service id="translation.boot.listener" class="Translation\EventListeners\BootListener">
             <argument type="service" id="thelia.translator" />
             <tag name="kernel.event_subscriber"/>
         </service>
-    </services>
+    </services>-->
 
     <hooks>
         <hook id="translation.hook" class="Translation\Hook\AdminHook">

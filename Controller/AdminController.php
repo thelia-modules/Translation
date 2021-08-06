@@ -14,10 +14,18 @@ use Thelia\Controller\Admin\BaseAdminController;
 use Thelia\Tools\URL;
 use Translation\Form\ExtensionForm;
 use Translation\Translation;
+use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * @Route("/admin/module/translation", name="admin_translation")
+ */
 
 class AdminController extends BaseAdminController
 {
+
+    /**
+     * @Route("", name="_menu", methods="GET")
+     */
     public function showPage()
     {
         // Is the module active ?
@@ -26,9 +34,12 @@ class AdminController extends BaseAdminController
         return $this->render('Translation/translation', ['in_use' => $translationInUse]);
     }
 
+    /**
+     * @Route("/extension", name="_extension", methods="POST")
+     */
     public function setExtensionAction()
     {
-        $form = new ExtensionForm($this->getRequest());
+        $form = $this->createForm(ExtensionForm::getName());
 
         $extensionForm = $this->validateForm($form);
 
@@ -39,6 +50,9 @@ class AdminController extends BaseAdminController
         return $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/translation'));
     }
 
+    /**
+     * @Route("/revert", name="_revert", methods="GET")
+     */
     public function revertAction()
     {
         $fs = new Filesystem();
