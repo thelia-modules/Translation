@@ -9,25 +9,35 @@
 namespace Translation\Controller;
 
 
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Thelia\Controller\Admin\BaseAdminController;
 use Thelia\Tools\URL;
 use Translation\Translation;
+use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * @Route("/admin/module/translation/import", name="admin_translation_import")
+ */
 class ImportController extends BaseAdminController
 {
+    /**
+     * @Route("", name="", methods="POST")
+     */
     public function importAction()
     {
         $path = Translation::TRANSLATIONS_DIR . 'tmp';
 
+        $fs = new Filesystem();
+
         if (!file_exists($path)) {
-            mkdir($path, 0777 , true);
+            $fs->mkdir($path);
         }
 
         $ext = Translation::getConfigValue('extension');
 
         if (!file_exists(Translation::TRANSLATIONS_DIR . $ext)) {
-            mkdir(Translation::TRANSLATIONS_DIR . $ext, 0777 , true);
+            $fs->mkdir(Translation::TRANSLATIONS_DIR . $ext);
         }
 
         /** @var UploadedFile $importFile */

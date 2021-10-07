@@ -18,14 +18,14 @@ class ExtensionForm extends BaseForm
                 [
                     'data' => Translation::getConfigValue("extension"),
                     'choices' => [
-                        'po' => '.po',
-                        "xlf" => '.xlf'
+                        '.po' => 'po',
+                        ".xlf" => 'xlf'
                     ]
                 ]
             );
     }
 
-    public function getName()
+    public static function getName()
     {
         return "translation-config-form";
     }

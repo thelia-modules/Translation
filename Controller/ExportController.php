@@ -3,6 +3,9 @@
 namespace Translation\Controller;
 
 
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Translation\Dumper\PhpFileDumper;
 use Symfony\Component\Translation\Dumper\XliffFileDumper;
@@ -11,6 +14,7 @@ use Thelia\Controller\Admin\BaseAdminController;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Event\Translation\TranslationEvent;
 use Thelia\Core\Template\TemplateDefinition;
+use Thelia\Core\Translation\Translator;
 use Thelia\Model\Lang;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Module;
@@ -19,32 +23,38 @@ use Thelia\Tools\URL;
 use Translation\Dumper\PoFileDumperWithComments;
 use Translation\Form\ExportForm;
 use Translation\Translation;
+use Symfony\Component\Routing\Annotation\Route;
 
-
+/**
+ * @Route("/admin/module/translation/export", name="admin_translation_export")
+ */
 class ExportController extends BaseAdminController
 {
     /**
      * @return \Symfony\Component\HttpFoundation\Response
      * @throws \Exception
+     * @Route("", name="", methods="POST")
      */
-    public function exportAction()
+    public function exportAction(RequestStack $requestStack, EventDispatcherInterface $dispatcher)
     {
         $translationsArchiveDir = Translation::TRANSLATIONS_DIR . 'archives';
         $translationsTempDir = Translation::TRANSLATIONS_DIR . 'tmp';
 
-        if (! file_exists($translationsArchiveDir)){
-            mkdir($translationsArchiveDir, 0777, true);
+        $fs = new Filesystem();
+
+        if (!file_exists($translationsArchiveDir)){
+            $fs->mkdir($translationsArchiveDir);
         }
 
         if (! file_exists($translationsTempDir)){
-            mkdir($translationsTempDir, 0777, true);
+            $fs->mkdir($translationsTempDir);
         }
 
-        $form = new ExportForm($this->getRequest());
+        $form = $this->createForm(ExportForm::getName());
 
         $exportForm  = $this->validateForm($form);
 
-        $lang = LangQuery::create()->filterById($this->getRequest()->get('lang_id'))->findOne();
+        $lang = LangQuery::create()->filterById($requestStack->getCurrentRequest()->get('lang_id'))->findOne();
 
         $dirs = $exportForm->get('directories')->getData();
         $ext = Translation::getConfigValue('extension');
@@ -60,7 +70,7 @@ class ExportController extends BaseAdminController
             ];
         }
         foreach ($dirs as $dir) {
-            $this->exportTranslations($dir, $ext, $lang, $translationsTempDir);
+            $this->exportTranslations($dir, $ext, $lang, $translationsTempDir, $requestStack, $dispatcher);
         }
 
         if (file_exists($translationsTempDir.DS.$ext)){
@@ -100,7 +110,7 @@ class ExportController extends BaseAdminController
         } else {
             $this->setupFormErrorContext(
                 'No translation' ,
-                $this->getTranslator()->trans('No translation found'),
+                Translator::getInstance()->trans('No translation found'),
                 $form
             );
 
@@ -120,7 +130,7 @@ class ExportController extends BaseAdminController
      * @param $tmpDir
      * @throws \Exception
      */
-    protected function exportTranslations($dir, $ext, Lang $lang, $tmpDir)
+    protected function exportTranslations($dir, $ext, Lang $lang, $tmpDir, RequestStack $requestStack, EventDispatcherInterface $dispatcher)
     {
         $items = [];
 
@@ -136,7 +146,7 @@ class ExportController extends BaseAdminController
             case 'backOffice':
             case 'email':
             case 'pdf' :
-                $templateDir = $this->getRequest()->get($dir.'_directory_select');
+                $templateDir = $requestStack->getCurrentRequest()->get($dir.'_directory_select');
                 $templateName = $this->camelCaseToUpperSnakeCase($dir);
                 $template = new TemplateDefinition(
                     $templateDir,
@@ -188,7 +198,7 @@ class ExportController extends BaseAdminController
 
             $keyMetaData = [];
 
-            $this->getDispatcher()->dispatch(TheliaEvents::TRANSLATION_GET_STRINGS, $event);
+            $dispatcher->dispatch($event, TheliaEvents::TRANSLATION_GET_STRINGS);
             if (null !== $translatableStrings = $event->getTranslatableStrings()) {
                 $catalogue = new MessageCatalogue($lang->getLocale());
 
@@ -260,8 +270,6 @@ class ExportController extends BaseAdminController
             'email' => 'Email',
             'pdf' => 'Pdf'
         ];
-
-        $domain = null;
 
         foreach ($modulesNames as $moduleName){
             if ($moduleName[0] !== '.'){
